@@ -39,7 +39,7 @@ starts, finishes, or a decision changes it.
 | M3 | Patient Registration | 001 | **Approved** 2026-11-22 (D-01–D-13) | — |
 | M4 | Appointments | 004 | Spec draft, awaiting approval | — |
 | M5 | Encounters | 005 | Spec draft, awaiting approval | — |
-| M6 | Supporting module (P1 pick) | 006, 007 or 008 | **Decision needed**: lab OR billing OR prescription | — |
+| M6 | Laboratory | 007 | **Decided 2026-11-22: Laboratory** — Prescription (006) and Billing (008) deferred as candidates | — |
 | M7 | Dashboard & Reports | 009 | Spec draft (P1 candidate) | — |
 | M8 | Verification & Release | test-strategy, deployment-guide | Not started | — |
 
