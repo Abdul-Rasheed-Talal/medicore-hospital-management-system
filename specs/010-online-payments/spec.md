@@ -76,8 +76,9 @@ Open Questions).
 
 **Out of scope**
 
-- Choosing the payment gateway — that is OQ-010-1, for the owner /
-  supervisor to decide. No gateway is named as the choice in this spec.
+- Choosing the payment gateway — decided in OQ-010-1 (Easypaisa, JazzCash,
+  bank transfer as primary; Stripe as the card option). Per-gateway
+  integration details are confirmed at implementation time.
 - A patient portal, patient accounts, or patient self-service payment
   (Master Plan §6 M13 — future module, not in v1)
 - Storing or handling card numbers, PINs, CVVs, or any cardholder data —
@@ -471,11 +472,16 @@ These are genuinely undecided. They must be answered by the owner (with
 hospital/discovery input where noted) before or at approval; this spec
 does not guess them.
 
-- **OQ-010-1 — Which payment gateway?** The first and blocking decision.
-  Options to consider: JazzCash, Easypaisa, Stripe, bank transfer. The
-  owner / supervisor picks. The choice decides the integration (API,
-  callback format, signature verification, sandbox access, and whether a
-  refund API exists at all). No implementation work may start before it.
+- **OQ-010-1 — Which payment gateway? RESOLVED 2026-11-22 by the owner.**
+  Easypaisa and JazzCash (mobile wallets) and bank transfer are the
+  convenient primary methods; Stripe is an additional option for users
+  who pay by card. MediCore therefore supports multiple gateways — one
+  adapter implementation per gateway behind the single gateway interface —
+  rather than a single gateway. The per-gateway integration details (API,
+  callback format, signature verification, sandbox access, whether a
+  refund API exists) are still to be confirmed per gateway at
+  implementation time; no implementation work may start before the spec
+  itself is approved.
 - **OQ-010-2 — Fees.** Is there a per-transaction fee, who bears it (the
   hospital or the patient), and is it added to the invoice, absorbed by
   the hospital, or shown separately? No fee may be charged or displayed

@@ -7,7 +7,7 @@
 **Status**: Draft — **separate module M9, NOT APPROVED, DO NOT IMPLEMENT
 YET.** The owner decided on 2026-11-22 that Online Payments is its own
 module. This plan describes how the spec *would* be implemented once the
-owner chooses a payment gateway (OQ-010-1), answers the spec's Open
+owner has chosen the payment gateways (OQ-010-1, RESOLVED 2026-11-22: Easypaisa, JazzCash, bank transfer as primary; Stripe as the card option), answers the spec's Open
 Questions (OQ-010-1–OQ-010-10), and approves the spec. No implementation
 work may start before then — the gateway choice decides the integration,
 so building before it would build the wrong integration.
@@ -42,7 +42,7 @@ ADR-001; verify against the lab machines at scaffold)
 
 **Primary Dependencies**: Django 5.x + Django REST Framework, React 18/19
 + Vite, Tailwind CSS + shadcn/ui (all decided, ADR-001 ACCEPTED); the
-chosen gateway's SDK/API client — **not yet chosen** (OQ-010-1)
+chosen gateways' SDK/API clients — Easypaisa, JazzCash, bank transfer primary; Stripe for cards (OQ-010-1, RESOLVED 2026-11-22)
 
 **Storage**: PostgreSQL 16 (Constitution Principle IV requires PostgreSQL)
 
@@ -82,7 +82,7 @@ online payments are a small fraction of invoice volume in demo data
 | V. Test-first | Duplicate-callback, unverified-callback, over-balance, and state-transition tests are specified before implementation. PASS by design. |
 | VI. Consistent/accessible UX | shadcn/ui components, labelled forms, field-level errors, keyboard-operable, visible focus, status not by colour alone. PASS by design. |
 | VII. Documentation/traceability | Spec → plan → tasks → tests traceable; API contract documented; every initiation, callback, and reconciliation auditable. PASS by design. |
-| VIII. Scope discipline | Initiate / callback / reconcile / refund only. No patient portal, no gateway choice made here, no fees, no settlement claims, no card handling. PASS. |
+| VIII. Scope discipline | Initiate / callback / reconcile / refund only. No patient portal, no fees, no settlement claims, no card handling. Gateway choice made in OQ-010-1. PASS. |
 
 ## Project Structure
 

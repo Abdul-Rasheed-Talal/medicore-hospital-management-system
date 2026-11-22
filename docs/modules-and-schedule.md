@@ -79,7 +79,7 @@ check-in reports the task worked on, what was finished, and the next task.
 
 | Week | Focus | Exit |
 |---|---|---|
-| 23–29 Nov 2026 | Review + approve specs 002–010; close blocking open questions (gateway choice for M9 is the long pole — decide early, it blocks M9) | Specs approved |
+| 23–29 Nov 2026 | Review + approve specs 002–010; close blocking open questions (gateway choice for M9 decided 2026-11-22: Easypaisa, JazzCash, bank transfer primary; Stripe for cards) | Specs approved |
 | 30 Nov–6 Dec | M0-T03 scaffold (unpark) + M1-T03/T04 auth backend + frontend | Runnable skeleton, login works |
 | 7–13 Dec | M1-T05/T06 (auth tests + converge) → **tag M1-v1.0.0**; M2 hospital setup | M1 tagged, M2 underway |
 | 14–20 Dec | M2 complete → **tag M2-v1.0.0**; M3 patient registration | M2 tagged, M3 underway |
