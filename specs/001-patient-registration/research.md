@@ -1,7 +1,9 @@
 # Research: Patient Registration (001)
 
 **Date**: 2026-11-22 | **Status**: Approved by owner 2026-11-22 — the decisions
-below are binding (see spec.md "Decisions" D-01–D-10)
+below are binding (see spec.md "Decisions" D-01–D-13, as amended 2026-11-22
+by owner instruction: D-11 gender required, D-12 CNIC / B-Form required,
+D-13 blood group optional)
 
 ## Sources
 
@@ -43,11 +45,14 @@ below are binding (see spec.md "Decisions" D-01–D-10)
 
 ### Duplicate detection
 
-- Decided rule (spec D-03): exact match on full name + date of birth blocks
-  registration pending a recorded human decision; an exact phone-number
-  match alone is a strong secondary signal (non-blocking warning). No fuzzy
-  matching in v1 — fuzzy matching adds false positives and needs tuning
-  data the project does not have (documented limitation).
+- Decided rule (spec D-03, D-12): exact match on full name + date of birth
+  blocks registration pending a recorded human decision, and an exact match
+  on CNIC / B-Form number also blocks registration pending a recorded human
+  decision — a CNIC / B-Form number is a unique national identifier, so a
+  match on it is as strong as a name + date of birth match. An exact
+  phone-number match alone is a strong secondary signal (non-blocking
+  warning). No fuzzy matching in v1 — fuzzy matching adds false positives
+  and needs tuning data the project does not have (documented limitation).
 - Decision is always human-recorded; the system never merges automatically
   (Master Plan §6 M03, FR-007). The registering Receptionist may resolve a
   duplicate warning with a written reason; merging two records requires
@@ -55,11 +60,19 @@ below are binding (see spec.md "Decisions" D-01–D-10)
 
 ### Fields and statuses
 
-- Decided (spec D-02, D-05, D-07): required — full name, date of birth,
-  phone; optional — sex/gender, address, emergency contact, CNIC. Patient
-  statuses: Active / Inactive / Merged / Archived. CNIC is optional,
-  encrypted at rest, visible in full only to Receptionist and Admin, masked
-  for all other roles; no CNIC search in v1.
+- Decided (spec D-02, D-05, D-07, D-11, D-12, D-13): required — full name,
+  date of birth, phone, gender (Male / Female / Other), CNIC / B-Form
+  number (`national_id`, 13 digits, `xxxxx-xxxxxxx-x`, dashes optional on
+  input, digits only stored, unique); optional — blood group (A+, A-, B+,
+  B-, AB+, AB-, O+, O-), address, emergency contact. Patient statuses:
+  Active / Inactive / Merged / Archived. CNIC / B-Form is required for
+  every registration, encrypted at rest, visible in full only to
+  Receptionist and Admin, masked for all other roles; no CNIC search in v1
+  — a deliberate decision (D-06, D-12), not an oversight: no workflow needs
+  to look a patient up by CNIC, and uniqueness is enforced via a
+  deterministic hash of the digits since the encrypted value cannot be
+  queried. The same optional blood-group field will apply to staff profiles
+  when the staff / hospital-setup feature is specified (D-13).
 - Search fields decided (spec D-06): MRN, full name (minimum 3 characters),
   phone number.
 

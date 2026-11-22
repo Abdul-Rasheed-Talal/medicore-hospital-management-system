@@ -6,7 +6,10 @@
 
 **Status**: Approved by owner 2026-11-22. The 10 open questions from the draft
 were decided by the owner (he delegated the choices to the agent; see
-"Decisions" below). Implementation may proceed once the scaffold (M01
+"Decisions" below). On 2026-11-22 the owner further amended three decisions:
+gender is now required (D-11), CNIC / B-Form is now required for every
+registration (D-12), and blood group is an optional field for patients and
+staff (D-13). Implementation may proceed once the scaffold (M01
 authentication/RBAC) exists; this spec is the binding requirement for
 patient registration.
 
@@ -75,7 +78,9 @@ and by name. No other feature needs to exist for this to be demonstrated.
    **When** they submit it,
    **Then** the record is not created and a field-level error names the missing field.
 3. **Given** a registration form with an invalid value (e.g. a date of birth in the
-   future, or a phone number that is not 9–15 digits, optional leading `+`),
+   future, a phone number that is not 9–15 digits, optional leading `+`, a
+   CNIC / B-Form number that is not 13 digits, a gender outside
+   Male / Female / Other, or a blood group outside the eight standard values),
    **When** they submit it,
    **Then** the record is not created and a field-level error explains the problem.
 4. **Given** two registration attempts for the same person in quick succession,
@@ -123,7 +128,8 @@ Master Plan §6 M03.
 
 **Independent Test**: Registering a patient whose name + date of birth match an
 existing patient produces a duplicate warning with a review action, and no second
-record is created until a human decides.
+record is created until a human decides. The same applies when the submitted
+CNIC / B-Form number matches an existing patient's (D-12).
 
 **Acceptance Scenarios**:
 
@@ -148,6 +154,12 @@ record is created until a human decides.
    **Then** the system shows a weaker "possible match — same phone number"
    warning (a strong secondary signal), but registration may proceed without a
    mandatory decision.
+7. **Given** an existing patient, **When** a Receptionist submits a registration
+   with the same CNIC / B-Form number (13 digits, dashes ignored),
+   **Then** the system shows a duplicate warning listing the candidate match
+   and asks for a decision — it does not create the record yet, even if the
+   name and date of birth differ. A CNIC / B-Form number is a unique national
+   identifier, so an exact match is a blocking duplicate signal (D-12).
 
 ### User Story 4 — Correct a patient's details (Priority: P3)
 
@@ -179,7 +191,18 @@ and leaves a visible correction-history entry with author and timestamp.
 - What happens when a Receptionist tries to register a patient while signed in as a Doctor? The action is denied by the backend with a permission error, not just hidden in the UI.
 - What happens when the same MRN is requested twice concurrently? The database unique constraint rejects the second write.
 - What happens to a patient record that is no longer needed? Records are not hard-deleted; status change (Active → Inactive / Archived, with a recorded reason) is used instead. Two records found to be the same person are merged only by an Admin; the losing record becomes Merged.
-- What happens when a CNIC is entered? It is optional, stored encrypted at rest, and masked (only last 4 digits visible) for every role except Receptionist and Admin.
+- What happens when a CNIC / B-Form number is entered? It is required for
+  every registration (D-12), stored encrypted at rest, and masked (only last
+  4 digits visible) for every role except Receptionist and Admin. Adults
+  give their CNIC number; children give their B-Form number — the same
+  `national_id` field holds either, validated as 13 digits
+  (`xxxxx-xxxxxxx-x`, dashes optional on input, digits only stored).
+- What happens when a patient is a child with no CNIC? The child's B-Form
+  number is used instead — CNIC / B-Form is required for every registration
+  with no exception (D-12). A patient who genuinely has neither document
+  cannot be registered until one is provided; the front desk records the
+  reason outside the system and registers the patient once the number is
+  available.
 
 ## Requirements *(mandatory)*
 
@@ -187,10 +210,10 @@ and leaves a visible correction-history entry with author and timestamp.
 
 - **FR-001**: The system MUST allow an authorised Receptionist or Admin to register a new patient with a unique MRN (Master Plan FR-005).
 - **FR-002**: The system MUST generate the MRN automatically; staff MUST NOT type it by hand. Format: `MC-YYYY-NNNNNN` — `MC` prefix, 4-digit year, 6-digit sequence that resets to `000001` each year (see Decisions, D-01).
-- **FR-003**: The system MUST validate required fields on the backend before saving; the frontend MUST show field-level errors (Master Plan FR-021). Required fields are full name, date of birth, and phone number (see Decisions, D-02).
+- **FR-003**: The system MUST validate required fields on the backend before saving; the frontend MUST show field-level errors (Master Plan FR-021). Required fields are full name, date of birth, phone number, gender, and CNIC / B-Form number (see Decisions, D-02, D-11, D-12). Validation: phone 9–15 digits with optional leading `+`; gender one of Male / Female / Other; national_id exactly 13 digits (`xxxxx-xxxxxxx-x`, dashes optional on input, digits only stored); blood group, when given, one of A+, A-, B+, B-, AB+, AB-, O+, O-.
 - **FR-004**: The system MUST allow authorised users to search patients by MRN, by full name (minimum 3 characters), and by phone number. There is no CNIC search in v1 (Master Plan FR-006).
 - **FR-005**: Search results MUST be paginated, sorted deterministically, and limited to permitted fields for the caller's role.
-- **FR-006**: The system MUST flag potential duplicate patients: an exact match on full name + date of birth blocks registration pending a recorded human decision; an exact phone-number match alone shows a non-blocking "possible match" warning. No fuzzy matching in v1 (documented limitation). The system MUST NOT create a second record or merge records without a recorded human decision (Master Plan FR-007).
+- **FR-006**: The system MUST flag potential duplicate patients: an exact match on full name + date of birth blocks registration pending a recorded human decision, and an exact match on CNIC / B-Form number also blocks registration pending a recorded human decision; an exact phone-number match alone shows a non-blocking "possible match" warning. No fuzzy matching in v1 (documented limitation). The system MUST NOT create a second record or merge records without a recorded human decision (Master Plan FR-007).
 - **FR-007**: The system MUST record duplicate-review decisions (who, when, decision, reason). The registering Receptionist may resolve a duplicate warning with a written reason; only an Admin may merge two records.
 - **FR-008**: The system MUST keep a correction history for demographic changes: old value, new value, author, timestamp. Corrections MUST NOT silently overwrite history.
 - **FR-009**: The system MUST NOT hard-delete patient records. Status changes MUST be recorded with a reason.
@@ -204,10 +227,13 @@ and leaves a visible correction-history entry with author and timestamp.
 
 - **Patient**: A person receiving care; distinct from a staff user account. Key
   attributes: MRN (unique, `MC-YYYY-NNNNNN`), full name (required), date of
-  birth (required), phone (required), sex/gender (optional), address
-  (optional), emergency contact (optional), CNIC (optional, encrypted at
-  rest, masked except for Receptionist/Admin), status (Active / Inactive /
-  Merged / Archived), created-by, created-at, updated-at. See "Data fields".
+  birth (required), phone (required), gender (required: Male / Female /
+  Other), national_id — CNIC for adults, B-Form for children — (required,
+  13 digits, unique, encrypted at rest, masked except for
+  Receptionist/Admin), blood group (optional: A+, A-, B+, B-, AB+, AB-,
+  O+, O-), address (optional), emergency contact (optional), status
+  (Active / Inactive / Merged / Archived), created-by, created-at,
+  updated-at. See "Data fields".
 - **DuplicateCandidate**: A flagged possible match between a new registration and
   an existing patient, with the matching fields, the reviewer's decision, and
   the decision timestamp.
@@ -225,8 +251,9 @@ and leaves a visible correction-history entry with author and timestamp.
   warning to resolve.
 - **SC-002**: Searching by MRN returns the exact patient; searching by name returns
   all and only the matching patients, paginated.
-- **SC-003**: 100% of attempted duplicate registrations (same name + date of birth
-  in test data) produce a review prompt; zero are silently created or merged.
+- **SC-003**: 100% of attempted duplicate registrations (same name + date of birth,
+  or same CNIC / B-Form number, in test data) produce a review prompt; zero are
+  silently created or merged.
 - **SC-004**: Every patient creation, correction, status change, and duplicate
   decision in test data has a corresponding audit event with actor and timestamp.
 - **SC-005**: A Doctor attempting to create or edit a patient record is denied by
@@ -254,18 +281,25 @@ workflow reason would violate least privilege (Constitution Principle III).
 Their own feature specs (encounters, lab, billing) will grant the search
 access their workflows need, when those features are specified.
 
-## Data fields (decided — see D-02, D-05, D-07)
+## Data fields (decided — see D-02, D-05, D-07, D-11, D-12, D-13)
 
-Required fields: full name, date of birth, phone number.
-Optional fields: sex/gender (Female / Male / Other / Prefer not to say),
-address, emergency contact name/phone, CNIC.
+Required fields: full name, date of birth, phone number, gender
+(Male / Female / Other), CNIC / B-Form number (`national_id`, 13 digits,
+`xxxxx-xxxxxxx-x`, dashes optional on input, digits only stored, unique).
+Optional fields: blood group (A+, A-, B+, B-, AB+, AB-, O+, O-), address,
+emergency contact name/phone.
 System fields: MRN (auto-generated, `MC-YYYY-NNNNNN`), status
 (Active / Inactive / Merged / Archived), created-by, created-at, updated-at.
 
-CNIC is optional and encrypted at rest; it is shown in full only to
-Receptionist and Admin and masked (last 4 digits only) for all other roles.
-No field is collected "because it might be useful" — data minimisation is a
-constitution requirement (Principle III, §2.4).
+CNIC / B-Form is required for every registration and encrypted at rest; it
+is shown in full only to Receptionist and Admin and masked (last 4 digits
+only) for all other roles. It is deliberately NOT searchable and has no
+search index (D-06, D-12): the number is a sensitive national identifier,
+no workflow needs to look a patient up by it, and the uniqueness check at
+registration is done via a deterministic hash, not by searching the
+encrypted value (see data-model.md). No field is collected "because it
+might be useful" — data minimisation is a constitution requirement
+(Principle III, §2.4).
 
 ## Assumptions
 
@@ -292,22 +326,29 @@ changing one requires an owner decision and a spec amendment.
    hospital; a plain sequential number grows unboundedly and a hospital-code
    prefix adds nothing for a single-hospital system. Generated server-side
    only; uniqueness enforced by a database constraint.
-2. **D-02 — Required fields: full name, date of birth, phone number.**
-   Optional: sex/gender, address, emergency contact, CNIC. Rationale: name +
-   date of birth are the minimum identity for the duplicate rule (D-03), and
-   a phone number is needed to contact the patient and as the secondary
-   duplicate signal; everything else is genuinely optional at registration
-   time and can be completed later, so requiring it would block front-desk
-   flow. Phone validation: 9–15 digits, optional leading `+`.
+2. **D-02 — Required fields: full name, date of birth, phone number, gender,
+   CNIC / B-Form number.** Optional: blood group, address, emergency
+   contact. (Amended 2026-11-22 by owner instruction — D-11, D-12, D-13.)
+   Rationale: name + date of birth are the minimum identity for the
+   duplicate rule (D-03), a phone number is needed to contact the patient
+   and as the secondary duplicate signal, gender is a basic demographic the
+   owner requires on every record, and a CNIC / B-Form number is the
+   national identity anchor that makes identity reliable in Pakistan
+   (D-12). Phone validation: 9–15 digits, optional leading `+`. Gender:
+   Male / Female / Other. National ID: exactly 13 digits,
+   `xxxxx-xxxxxxx-x`, dashes optional on input, digits only stored.
 3. **D-03 — Duplicate rule: exact match only.** An exact match on full name +
-   date of birth blocks registration pending a recorded human decision. An
-   exact phone-number match alone is a strong secondary signal: a
-   non-blocking "possible match — same phone number" warning. No fuzzy
-   matching in v1 — documented limitation. Rationale: fuzzy matching needs
-   tuning data the project does not have and would produce false positives
-   that block legitimate registrations; exact matching is predictable and
-   testable, and the phone signal catches the common case of a name spelled
-   differently.
+   date of birth blocks registration pending a recorded human decision, and
+   an exact match on CNIC / B-Form number also blocks registration pending a
+   recorded human decision (D-12 — a CNIC / B-Form number is a unique
+   national identifier, so a match on it is as strong as a name + date of
+   birth match). An exact phone-number match alone is a strong secondary
+   signal: a non-blocking "possible match — same phone number" warning. No
+   fuzzy matching in v1 — documented limitation. Rationale: fuzzy matching
+   needs tuning data the project does not have and would produce false
+   positives that block legitimate registrations; exact matching is
+   predictable and testable, and the phone signal catches the common case
+   of a name spelled differently.
 4. **D-04 — Who can register: Receptionist and Admin.** No separate
    Registration role in v1. Rationale: registration is a front-desk job and
    Admin already holds all Receptionist powers for cover; a separate role
@@ -325,15 +366,21 @@ changing one requires an owner decision and a spec amendment.
    the everyday lookup, phone is the fallback when the patient has forgotten
    their MRN; a 3-character minimum keeps name search usable while avoiding
    one-letter queries that return the whole register. CNIC search is withheld
-   because CNIC is sensitive (D-07) and no workflow needs to look a patient
-   up by CNIC.
-7. **D-07 — CNIC: optional to collect; encrypted at rest; visible in full
-   only to Receptionist and Admin, masked (last 4 digits) for all other
-   roles; never in logs, list views, or URLs.** Rationale: CNIC is useful as
-   a strong identity anchor in Pakistan, so collecting it is justified — but
-   only optionally, since many patients will not have it to hand at
-   registration, and restricting visibility follows data minimisation and
-   least privilege (Constitution Principle III).
+   deliberately, not by oversight (D-12): CNIC is sensitive and no workflow
+   needs to look a patient up by CNIC — the number is used only as a
+   registration-time identity check and duplicate signal, verified against a
+   stored hash, never as a search key.
+7. **D-07 — CNIC / B-Form: required for every registration (amended
+   2026-11-22 by owner instruction — D-12); encrypted at rest; visible in
+   full only to Receptionist and Admin, masked (last 4 digits) for all other
+   roles; never in logs, list views, or URLs; never searchable (D-06).**
+   Rationale: CNIC is the strong identity anchor in Pakistan, so collecting
+   it on every registration is justified — adults give their CNIC number,
+   children their B-Form number, in the same `national_id` field. Restricting
+   visibility and search follows data minimisation and least privilege
+   (Constitution Principle III). Uniqueness is enforced on a deterministic
+   hash of the digits (see data-model.md), since the encrypted value itself
+   cannot be queried.
 8. **D-08 — Duplicate-review authority: the registering Receptionist may
    resolve a duplicate warning with a written reason note; actually merging
    two records requires Admin.** Rationale: making every duplicate warning
@@ -350,6 +397,38 @@ changing one requires an owner decision and a spec amendment.
    separate mobile/portal client is ever approved.
 10. **D-10 — Licence: MIT stays.** Rationale: the usual final-year-project
     default; permissive and simple, and the owner raised no objection.
+11. **D-11 — Gender is required (owner instruction, 2026-11-22).** Field
+    `sex` / `gender`, required, allowed values Male / Female / Other.
+    Rationale: gender is a basic demographic the owner requires on every
+    patient record for reporting and clinical context; there is no "Prefer
+    not to say" option — the owner decided every registration records a
+    gender. This replaces the earlier delegated choice (D-02) that made it
+    optional.
+12. **D-12 — CNIC / B-Form is required for every patient registration
+    (owner instruction, 2026-11-22).** Field `national_id` — a CNIC number
+    for adults, a B-Form number for children — required at registration,
+    validated as exactly 13 digits in the standard `xxxxx-xxxxxxx-x`
+    pattern (dashes optional on input, digits only stored). An exact
+    CNIC / B-Form match is a blocking duplicate signal alongside exact
+    name + date of birth (D-03). Privacy rules are unchanged from D-07:
+    encrypted at rest, full view only for Receptionist and Admin, masked
+    for all other roles, never searchable, never in logs, list views, or
+    URLs. Uniqueness is enforced via a deterministic hash of the digits
+    (see data-model.md), since the encrypted value cannot be queried.
+    Rationale: a national identity number on every record makes patient
+    identity reliable and gives the duplicate check a unique anchor that
+    name + date of birth alone cannot provide. This replaces the earlier
+    delegated choice (D-02, D-07) that made CNIC optional.
+13. **D-13 — Blood group is an optional field (owner instruction,
+    2026-11-22).** Field `blood_group`, optional, allowed values A+, A-,
+    B+, B-, AB+, AB-, O+, O-. The same optional blood-group field will
+    also apply to staff profiles when the staff / hospital-setup feature is
+    specified; no staff fields are added to this spec beyond that note.
+    Rationale: blood group is useful clinical information for a hospital
+    (transfusion readiness, emergencies) but is often unknown at
+    registration, so requiring it would block front-desk flow; recording it
+    for staff as well as patients keeps one consistent demographic field
+    across people in the system.
 
 ## Deferred (not decided here)
 

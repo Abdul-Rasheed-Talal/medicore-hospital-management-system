@@ -5,8 +5,10 @@
 **Input**: Feature specification from `./spec.md`
 
 **Status**: Approved by owner 2026-11-22. Spec 001 and ADR-001 are approved;
-the 10 open questions are decided (see spec.md "Decisions"). Implementation
-may proceed once the scaffold (M01 authentication/RBAC) exists.
+the 10 open questions are decided (see spec.md "Decisions"), as amended
+2026-11-22 by owner instruction: gender required (D-11), CNIC / B-Form
+required (D-12), blood group optional (D-13). Implementation may proceed
+once the scaffold (M01 authentication/RBAC) exists.
 
 ## Summary
 
@@ -117,7 +119,7 @@ clinical content or secrets.
 
 | Group | Operations |
 |---|---|
-| `POST /api/patients/` | Register a patient (Receptionist/Admin). Returns 201 with MRN, or 409/duplicate-warning payload when a candidate match exists. |
+| `POST /api/patients/` | Register a patient (Receptionist/Admin). Returns 201 with MRN, or 409/duplicate-warning payload when a candidate match exists (name + DOB, or CNIC / B-Form). |
 | `GET /api/patients/?search=&page=` | Search by MRN, name (min 3 chars), or phone. Paginated, role-filtered fields; CNIC never searchable, never in list views. |
 | `GET /api/patients/{id}/` | Patient summary + authorised visit history (later features). |
 | `PATCH /api/patients/{id}/` | Correct demographics (Receptionist/Admin). Writes a correction-history row. |
@@ -135,8 +137,11 @@ permissions table; validation errors return structured field-level errors.
 - Permission classes per endpoint + object-level checks; deny by default.
 - MRN generation server-side only; never trust a client-supplied MRN.
   Format `MC-YYYY-NNNNNN`, sequence resets yearly (spec D-01).
-- CNIC stored encrypted at rest; masked (last 4 digits) for all roles except
-  Receptionist and Admin; never in logs, list views, or URLs.
+- CNIC / B-Form stored encrypted at rest; uniqueness enforced on a
+  deterministic hash of the 13 digits (the encrypted value cannot be
+  queried); masked (last 4 digits) for all roles except Receptionist and
+  Admin; never in logs, list views, or URLs; never searchable by design
+  (spec D-06, D-12).
 - Audit events for create / correct / status change / duplicate review / merge.
 - No patient data in logs, URLs (beyond the MRN in a path), or error messages
   beyond what the caller's role may see.
@@ -144,7 +149,9 @@ permissions table; validation errors return structured field-level errors.
 
 ## Test strategy
 
-- **Unit**: MRN generation/uniqueness, duplicate-matching rule, validation rules, status transitions.
+- **Unit**: MRN generation/uniqueness, duplicate-matching rule (name + DOB
+  and CNIC / B-Form), validation rules (gender enum, 13-digit national ID,
+  blood-group enum), status transitions.
 - **Model/DB**: unique constraint, correction-history rows, no hard delete, migration applies cleanly from fresh setup.
 - **API**: auth required (401 unauthenticated), permission allow/deny per role (Doctor create → 403), validation errors (400 with field errors), duplicate flow (warning → confirm-different → created; confirm-same → no new record), pagination.
 - **Component**: registration form validation feedback, duplicate-warning dialog, empty search state.
@@ -155,13 +162,16 @@ Tests are written first (Constitution Principle V) and must fail before implemen
 
 ## Risks for this feature
 
-- **MRN format / required fields decided** (spec D-01, D-02) — the model and
-  form are unblocked.
+- **MRN format / required fields decided** (spec D-01, D-02, D-11, D-12,
+  D-13) — the model and form are unblocked. Gender and CNIC / B-Form are
+  required; blood group is optional.
 - **Auth/RBAC (M01) not built yet** — this feature cannot be demonstrated without it. Mitigation: build M01 first or in parallel, with this feature's tests depending on it.
 - **Duplicate rule is exact-only** — it will miss typo'd names (documented
   limitation, spec D-03). Mitigation: the phone-number secondary signal
-  catches many of those cases; log every warning and review with the owner
-  after the first demo before considering fuzzy matching.
+  catches many of those cases, and the CNIC / B-Form match (D-12) catches
+  the same person even when the name is spelled differently; log every
+  warning and review with the owner after the first demo before considering
+  fuzzy matching.
 - **Scope creep into appointments** — WF-01 continues into booking; that is a separate feature. Mitigation: the spec's out-of-scope list is enforced at review.
 
 ## Complexity Tracking
