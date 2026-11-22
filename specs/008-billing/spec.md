@@ -4,16 +4,16 @@
 
 **Created**: 2026-11-22
 
-**Status**: Draft — **P1 CANDIDATE, NOT APPROVED, DO NOT IMPLEMENT YET.**
-Billing is a P1 Candidate in the Master Plan (§4.2: "Billing, invoice and
-payment recording — a strong administrative workflow, but financial rules
-need discovery") and §6 M09 ("Candidate; rules require discovery"). The
-roadmap (§17, Phase 6, Weeks 17–19) says to choose **lab OR billing OR
-prescription** based on approved priority and remaining time, and explicitly
-**not** to implement all in parallel. This spec becomes committed scope only
-when the owner makes that priority call, confirms or replaces the Open
-Questions below, and approves this spec (Master Plan §4.4 Scope Control
-Rule). Until then it is a requirements draft for the decision, not an
+**Status**: Draft — **committed module M8, NOT APPROVED, DO NOT IMPLEMENT
+YET.** The owner decided on 2026-11-22 that Prescription, Billing and
+Online Payments are each their own separate module because they are
+important, and must not be lumped together or deferred as a group.
+Billing is therefore committed scope in the module plan (M8), not a
+deferred candidate — the old Phase 6 "choose lab OR billing OR
+prescription" pick no longer applies to it. This spec becomes an
+implementation instruction only when the owner confirms or replaces the
+Open Questions below and approves this spec (Master Plan §4.4 Scope
+Control Rule). Until then it is a requirements draft, not an
 implementation instruction.
 
 **Input**: Master Plan v1.0 (22 November 2026, draft planning baseline), §4.2
@@ -493,9 +493,11 @@ These are genuinely undecided. They must be answered by the owner (with
 hospital/discovery input where noted) before or at approval; this spec
 does not guess them.
 
-- **OQ-008-1 — Priority call: is billing in the MVP at all?** Master Plan
-  §17 Phase 6 says choose lab OR billing OR prescription. The owner must
-  make that call. If billing is deferred, this spec stays a draft.
+- **OQ-008-1 — RESOLVED 2026-11-22: billing is in scope as its own module
+  (M8).** The owner decided Prescription, Billing and Online Payments are
+  each separate modules. The old Phase 6 "choose lab OR billing OR
+  prescription" pick no longer applies. (Number kept so later OQ
+  references do not shift.)
 - **OQ-008-2 — Invoice number format.** Required to be unique and
   system-generated (FR-004); the format itself is undecided. Suggested
   pattern mirroring the MRN: `INV-YYYY-NNNNNN` — to be confirmed, not

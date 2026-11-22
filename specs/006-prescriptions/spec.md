@@ -4,13 +4,15 @@
 
 **Created**: 2026-11-22
 
-**Status**: Draft — not yet approved by the owner. **P1 CANDIDATE — pending
-the owner's priority call.** This feature is a candidate, not committed
-scope: Master Plan §4.2 lists the prescription record as "P1 - Candidate —
-include only if workflow and safe demonstration requirements are clear",
-and §17 Phase 6 says to choose lab OR billing OR prescription based on
-approved priority and remaining time, avoiding implementing all in parallel.
-Do not implement this spec until the owner explicitly includes it.
+**Status**: Draft — not yet approved by the owner. **Committed module M7.**
+The owner decided on 2026-11-22 that Prescription, Billing and Online
+Payments are each their own separate module because they are important, and
+must not be lumped together or deferred as a group. Prescription is
+therefore committed scope in the module plan (M7), not a deferred
+candidate — the old Phase 6 "choose lab OR billing OR prescription"
+pick no longer applies to it. This spec is still a draft awaiting the
+owner's approval before any implementation. Do not implement this spec
+until the owner approves it.
 
 **Input**: Master Plan v1.0 (22 November 2026, draft planning baseline),
 §4 P1 candidate prescription record and §4.3 out-of-scope (no clinical
@@ -334,9 +336,8 @@ optional; patient statuses Active / Inactive / Merged / Archived.
 - Authentication and RBAC (Master Plan M01), patient registration (Spec 001,
   M03), and encounters (Spec 005, M05) exist before this feature; prescription
   endpoints assume a signed-in Doctor and a finalised encounter.
-- **Candidate status**: this feature is implemented only if the owner
-  explicitly includes it (Master Plan §4.2 P1 Candidate, §17 Phase 6 — one
-  supporting module, not all in parallel).
+- **Module status**: this feature is committed module M7 (owner decision
+  2026-11-22); it is implemented only once the owner approves this spec.
 - All demo/test data is synthetic; no real patient records are used.
 - Display timezone for dates/times is Asia/Karachi; timestamps are stored in
   UTC and displayed in Asia/Karachi (ADR-001).
@@ -422,6 +423,6 @@ Spec 005's E-01…E-08.
   open decisions) are listed in the contents but absent from the document.
   Explicitly deferred: they must be supplied or formally deferred before
   release planning (Phase 8), but they do not block this feature.
-- **Candidate status**: inclusion of this feature is itself deferred to the
-  owner's priority call (Master Plan §17 Phase 6). If the owner picks lab
-  or billing instead, this spec stays a draft and is not implemented.
+- **Module status**: this feature is committed module M7 (owner decision
+  2026-11-22); its spec is still a draft awaiting the owner's approval
+  before implementation.

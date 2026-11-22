@@ -39,9 +39,12 @@ starts, finishes, or a decision changes it.
 | M3 | Patient Registration | 001 | **Approved** 2026-11-22 (D-01–D-13) | — |
 | M4 | Appointments | 004 | Spec draft, awaiting approval | — |
 | M5 | Encounters | 005 | Spec draft, awaiting approval | — |
-| M6 | Supporting module (P1 pick) | 006, 007 or 008 | **Decision needed**: lab OR billing OR prescription | — |
-| M7 | Dashboard & Reports | 009 | Spec draft (P1 candidate) | — |
-| M8 | Verification & Release | test-strategy, deployment-guide | Not started | — |
+| M6 | Laboratory | 007 | **Decided 2026-11-22: Laboratory** is the P1 supporting module | — |
+| M7 | Prescription | 006 | Spec draft, awaiting approval — own module (owner decision 2026-11-22) | — |
+| M8 | Billing | 008 | Spec draft, awaiting approval — own module (owner decision 2026-11-22) | — |
+| M9 | Online Payments | 010 | Spec draft, awaiting approval — own module (owner decision 2026-11-22) | — |
+| M10 | Dashboard & Reports | 009 | Spec draft (P1 candidate) | — |
+| M11 | Verification & Release | test-strategy, deployment-guide | Not started | — |
 
 ## Task template (per module)
 
@@ -65,8 +68,8 @@ model + MRN; `M3-T03-B`: registration API + duplicate review).
 - **M0-T03** — Application scaffold (Django + React shells). **Parked** — code
   exists locally on branch `feat/medicore-scaffold`, unpushed; resumes only
   after specs 002–009 are approved.
-- **M1-T01 / M2-T01 / M4-T01 / M5-T01 / M6-T01 / M7-T01** — specs written, drafts
-  awaiting owner/supervisor approval.
+- **M1-T01 / M2-T01 / M4-T01 / M5-T01 / M6-T01 / M7-T01 / M8-T01 / M9-T01 /
+  M10-T01** — specs written, drafts awaiting owner/supervisor approval.
 - **M3-T01 / M3-T02** — **Done and approved.**
 
 ## Daily schedule
@@ -76,14 +79,15 @@ check-in reports the task worked on, what was finished, and the next task.
 
 | Week | Focus | Exit |
 |---|---|---|
-| 23–29 Nov 2026 | Review + approve specs 002–009; **P1 pick for M6**; close blocking open questions | Specs approved, M6 decided |
+| 23–29 Nov 2026 | Review + approve specs 002–010; close blocking open questions (gateway choice for M9 is the long pole — decide early, it blocks M9) | Specs approved |
 | 30 Nov–6 Dec | M0-T03 scaffold (unpark) + M1-T03/T04 auth backend + frontend | Runnable skeleton, login works |
 | 7–13 Dec | M1-T05/T06 (auth tests + converge) → **tag M1-v1.0.0**; M2 hospital setup | M1 tagged, M2 underway |
 | 14–20 Dec | M2 complete → **tag M2-v1.0.0**; M3 patient registration | M2 tagged, M3 underway |
 | 21 Dec–3 Jan | M3 complete → **tag M3-v1.0.0**; M4 appointments | M3 tagged, M4 underway |
 | Jan 2027 | M4 → **tag M4-v1.0.0**; M5 encounters → **tag M5-v1.0.0** | Outpatient flow complete |
-| Feb 2027 | M6 supporting module → **tag M6-v1.0.0**; M7 dashboards → **tag M7-v1.0.0** | MVP complete |
-| Mar 2027 | M8 verification, security review, deployment, submission | Release candidate |
+| Feb 2027 | M6 Laboratory → **tag M6-v1.0.0**; M7 Prescription → **tag M7-v1.0.0** | Lab + prescription complete |
+| Mar 2027 | M8 Billing → **tag M8-v1.0.0**; M9 Online Payments → **tag M9-v1.0.0** | Billing + payments complete |
+| Apr 2027 | M10 Dashboard & Reports → **tag M10-v1.0.0**; M11 verification, security review, deployment, submission | Release candidate |
 
 Dates are a plan, not a promise — a slipped task moves the weeks after it, and
 the change is recorded here and in the daily check-in. The Master Plan roadmap

@@ -4,12 +4,11 @@
 
 **Input**: Feature specification from `./spec.md`
 
-**Status**: Draft — **P1 CANDIDATE, NOT APPROVED, DO NOT IMPLEMENT YET.**
-Billing is a P1 Candidate (Master Plan §4.2, §6 M09; roadmap §17 Phase 6:
-choose lab OR billing OR prescription). This plan describes how the spec
-*would* be implemented once the owner makes the priority call, answers the
-spec's Open Questions (OQ-008-1–OQ-008-13), and approves the spec. No
-implementation work may start before then.
+**Status**: Draft — **committed module M8, NOT APPROVED, DO NOT IMPLEMENT
+YET.** Billing is its own separate module (owner decision 2026-11-22).
+This plan describes how the spec *would* be implemented once the owner
+answers the spec's Open Questions (OQ-008-2–OQ-008-13) and approves the
+spec. No implementation work may start before then.
 
 ## Summary
 
@@ -69,7 +68,7 @@ thousands of invoices in demo data
 
 | Principle | Check for this feature |
 |---|---|
-| I. Requirements-first | Spec is a DRAFT candidate; implementation is blocked until the owner makes the Phase 6 priority call, answers OQ-008-1–OQ-008-13, and approves the spec. No implementation on this plan alone. GATE NOT YET PASSED. |
+| I. Requirements-first | Spec is a DRAFT, committed module M8; implementation is blocked until the owner answers OQ-008-2–OQ-008-13 and approves the spec. No implementation on this plan alone. GATE NOT YET PASSED. |
 | II. Modular architecture | `billing` Django app, separate frontend pages/components, money/state rules in services — not duplicated in views/serializers. PASS by design. |
 | III. Security/privacy by design | Auth required; RBAC backend-enforced; least privilege (Billing sees name + MRN only, no CNIC, no clinical notes); synthetic data only; no secrets in code; no patient data in logs. PASS by design. |
 | IV. Data integrity | PostgreSQL, `Decimal`/`NUMERIC` for all money, invoice-number and receipt-reference unique constraints, balance + state updated in the same transaction as each payment, migrations version-controlled, no hard delete. PASS by design. |
@@ -278,10 +277,8 @@ them now would test undecided rules (OQ-008-1–OQ-008-13).
 
 ## Risks for this feature
 
-- **Not approved / priority undecided (OQ-008-1)** — the Phase 6 choice
-  (lab OR billing OR prescription) has not been made. Mitigation: this
-  spec and plan exist so the decision can be taken on understood scope;
-  no code is written before it.
+- **Not approved** — the spec is a draft awaiting the owner's approval.
+  Mitigation: no code is written before it.
 - **Financial rules need discovery (Master Plan §4.2, §6 M09)** —
   currency, payment methods, discount, tax, refund approver, and receipt
   format are all open (OQ-008-2–OQ-008-8). Mitigation: the spec makes
