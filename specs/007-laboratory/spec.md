@@ -4,13 +4,12 @@
 
 **Created**: 2026-11-22
 
-**Status**: Draft — not yet approved by the owner. **P1 CANDIDATE — pending
-the owner's priority call.** This feature is a candidate, not committed
-scope: Master Plan §4.2 lists laboratory requests and result entry as
-"P1 - Candidate — useful cross-department workflow; may be deferred if time
-is tight", and §17 Phase 6 says to choose lab OR billing OR prescription
-based on approved priority and remaining time, avoiding implementing all in
-parallel. Do not implement this spec until the owner explicitly includes it.
+**Status**: Draft — not yet approved by the owner. **CHOSEN as module M6 on
+2026-11-22 by the owner: Laboratory is the P1 supporting module** (Master
+Plan §17 Phase 6 pick). Prescription (Spec 006) and Billing (Spec 008) stay
+deferred candidates. This spec is now committed scope in the module plan, but
+its content is still a draft awaiting the owner's approval before any
+implementation. Do not implement this spec until the owner approves it.
 
 **Input**: Master Plan v1.0 (22 November 2026, draft planning baseline),
 §4 P1 candidate laboratory requests and result entry, §5 Laboratory Staff
