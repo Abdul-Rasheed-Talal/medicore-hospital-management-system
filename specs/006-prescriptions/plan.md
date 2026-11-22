@@ -4,10 +4,9 @@
 
 **Input**: Feature specification from `./spec.md`
 
-**Status**: Draft — spec not yet approved by the owner. **P1 CANDIDATE —
-pending the owner's priority call.** Do not implement until the owner
-explicitly includes this feature (Master Plan §4.2 P1 Candidate, §17 Phase
-6 — choose lab OR billing OR prescription, not all in parallel).
+**Status**: Draft — spec not yet approved by the owner. **Committed module
+M7** (owner decision 2026-11-22: Prescription is its own separate module).
+Do not implement until the owner approves this spec.
 
 ## Summary
 
@@ -53,7 +52,7 @@ ADR-001; verify against the lab machines at scaffold)
 
 | Principle | Check for this feature |
 |---|---|
-| I. Requirements-first | Spec is a draft and a P1 candidate; implementation waits for owner approval and the priority call. PASS when approved. |
+| I. Requirements-first | Spec is a draft, committed module M7; implementation waits for owner approval. PASS when approved. |
 | II. Modular architecture | `prescriptions` Django app, separate frontend pages/components, business rules in services — not duplicated in views/serializers. PASS by design. |
 | III. Security/privacy by design | Auth required; RBAC backend-enforced; least privilege (prescriber-only mutations; no Receptionist/Lab/Billing access; Admin no clinical content by default); synthetic data only. PASS by design. |
 | IV. Data integrity | PostgreSQL, status constraint, transactions for finalise/cancel + audit, migrations version-controlled, no hard delete, cancel-and-reissue preserves history. PASS by design. |
@@ -68,7 +67,7 @@ ADR-001; verify against the lab machines at scaffold)
 
 ```text
 specs/006-prescriptions/
-├── spec.md              # Feature specification (draft 2026-11-22, P1 CANDIDATE)
+├── spec.md              # Feature specification (draft 2026-11-22, module M7)
 ├── plan.md              # This file
 └── tasks.md             # Phase 2 output (NOT created yet)
 ```
@@ -191,10 +190,8 @@ Tests are written first (Constitution Principle V) and must fail before implemen
 
 ## Risks for this feature
 
-- **Candidate status (priority call not made)** — the feature may never be
-  implemented if the owner picks lab or billing instead (Master Plan §17
-  Phase 6). Mitigation: no implementation work starts until the owner
-  explicitly includes it.
+- **Not yet approved** — the spec is a draft awaiting the owner's approval.
+  Mitigation: no implementation work starts until it is approved.
 - **No medication catalog (Q-001)** — free-text medication fields risk
   inconsistent spelling. Mitigation: accepted for v1 (P-05); a catalog is
   a later spec decision, not an implementation improvisation.

@@ -297,7 +297,7 @@ Indexes: `(patient, encounter_date)`; `(clinician, encounter_date)`; `status`.
 One encounter may have many diagnoses. A diagnosis records an assessment;
 it does not imply a prescription (Master Plan §7.1).
 
-### 3.11 Prescription (`prescriptions`) — P1 candidate
+### 3.11 Prescription (`prescriptions`) — M7
 
 | Field | Type | Req. | Notes |
 |---|---|---|---|
@@ -318,7 +318,7 @@ it does not imply a prescription (Master Plan §7.1).
 Rules: no treatment recommendations or automated dosing decisions (Master
 Plan M06). No pharmacy dispensing/stock logic — that is M12, out of scope.
 
-### 3.12 LabRequest (`laboratory`) — P1 candidate
+### 3.12 LabRequest (`laboratory`) — M6
 
 | Field | Type | Req. | Notes |
 |---|---|---|---|
@@ -333,7 +333,7 @@ Plan M06). No pharmacy dispensing/stock logic — that is M12, out of scope.
 | created_by | FK → User | Yes | |
 | created_at / updated_at | datetime (UTC) | — | |
 
-### 3.13 LabResult (`laboratory`) — P1 candidate
+### 3.13 LabResult (`laboratory`) — M6
 
 | Field | Type | Req. | Notes |
 |---|---|---|---|
@@ -351,7 +351,7 @@ Rules: result entry and result approval are separate duties where the
 approved workflow requires it; unauthorised users cannot alter results.
 Corrections to a finalised result are traceable, not silent overwrites.
 
-### 3.14 Invoice (`billing`) — P1 candidate
+### 3.14 Invoice (`billing`) — M8
 
 | Field | Type | Req. | Notes |
 |---|---|---|---|
@@ -375,7 +375,7 @@ Constraints: totals are computed from lines/payments in a transaction;
 `total >= 0`; `amount_paid <= total` (overpayment prevented, Master Plan
 M09). Void/refund follows an approved, audited process — never a delete.
 
-### 3.15 InvoiceLine (`billing`) — P1 candidate
+### 3.15 InvoiceLine (`billing`) — M8
 
 | Field | Type | Req. | Notes |
 |---|---|---|---|
@@ -388,7 +388,7 @@ M09). Void/refund follows an approved, audited process — never a delete.
 | line_total | decimal(12,2) | System | quantity × unit_price; computed |
 | created_at | datetime (UTC) | — | |
 
-### 3.16 Payment (`billing`) — P1 candidate
+### 3.16 Payment (`billing`) — M8
 
 | Field | Type | Req. | Notes |
 |---|---|---|---|
@@ -402,9 +402,31 @@ M09). Void/refund follows an approved, audited process — never a delete.
 | status | enum: Recorded / Voided / Refunded | — | Default Recorded; void/refund is audited, never a delete |
 | created_at | datetime (UTC) | — | |
 
-Invoice and payment are separate records (Master Plan §7.1). No insurance
-claim submission, no real payment settlement, no banking integration
-(Master Plan §4.3).
+Invoice and payment are separate records (Master Plan §7.1). Offline
+payment recording only — online collection is Spec 010 (M9) below.
+
+### 3.16b OnlinePayment (`payments`) — M9 (Spec 010)
+
+| Field | Type | Req. | Notes |
+|---|---|---|---|
+| id | UUID PK | — | |
+| gateway_reference | varchar(100), unique, indexed | System | System-generated; format decided with the gateway (Spec 010 OQ-010-1) |
+| invoice | FK → Invoice | Yes | Must be Unpaid / Partially paid at initiation |
+| amount | decimal(12,2) | Yes | Positive; must not exceed the outstanding balance at initiation |
+| currency | varchar(10) | Yes | PKR — working assumption (Spec 010 OQ-010-9) |
+| gateway | varchar(50) | Yes | Name of the chosen gateway (Spec 010 OQ-010-1) |
+| status | enum: Initiated / Paid / Failed / Refunded / Expired | — | Default Initiated; transitions enforced |
+| gateway_event_id | varchar(100), unique, nullable | — | Idempotency key for callbacks; a duplicate event is ignored |
+| failure_reason | text, nullable | — | Recorded when Failed; never card data |
+| initiated_by | FK → User | Yes | Billing / Admin |
+| initiated_at | datetime (UTC) | — | |
+| paid_at | datetime (UTC), nullable | — | Set from the gateway's paid timestamp when Paid |
+| created_at | datetime (UTC) | — | |
+
+A verified success callback creates a Spec 008 Payment record (method
+Online) and updates the invoice balance/state in one transaction. No
+card data is ever stored. No real money moves outside sandbox/test mode
+in development or demonstration.
 
 ### 3.17 AuditEvent (`audit`) — shared
 

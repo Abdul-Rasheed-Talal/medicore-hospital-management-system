@@ -80,11 +80,12 @@ current approval state.
 | `patients` | Patient identity, demographics, search, duplicate review, correction history, status, patient summary | `accounts`, `audit` | P0 — Spec 001 approved (M03) |
 | `appointments` | Schedules/slots, appointment create/reschedule/cancel, status transitions, conflict rules, daily schedules | `patients`, `organization`, `audit` | P0 — spec not yet written (M04) |
 | `encounters` | Visit/encounter records, notes, diagnoses, draft → finalised lifecycle, corrections | `patients`, `appointments`, `organization`, `audit` | P0 — spec not yet written (M05) |
-| `prescriptions` | Medication order records linked to encounters, draft/finalised/cancelled states | `encounters`, `audit` | **P1 candidate** (M06) — include only if workflow and safe demo scope are clear |
-| `laboratory` | Test catalogue, lab requests, specimen/status workflow, results, approval | `patients`, `encounters`, `audit` | **P1 candidate** (M08) — may be deferred if time is tight |
-| `billing` | Invoices, invoice lines, payments, receipts, balances, void/refund (audited) | `patients`, `encounters`, `organization`, `audit` | **P1 candidate** (M09) — financial rules need discovery |
+| `prescriptions` | Medication order records linked to encounters, draft/finalised/cancelled states | `encounters`, `audit` | **M7** — own module (owner decision 2026-11-22); spec draft, awaiting approval |
+| `laboratory` | Test catalogue, lab requests, specimen/status workflow, results, approval | `patients`, `encounters`, `audit` | **M6** — chosen P1 supporting module (owner decision 2026-11-22); spec draft, awaiting approval |
+| `billing` | Invoices, invoice lines, payments, receipts, balances, void/refund (audited) | `patients`, `encounters`, `organization`, `audit` | **M8** — own module (owner decision 2026-11-22); spec draft, awaiting approval; financial rules need discovery |
+| `payments` | Online payment attempts, gateway integration, webhook handling, reconciliation into `billing` Payment records | `billing`, `audit` | **M9** — own module (owner decision 2026-11-22); Spec 010 draft, awaiting approval; gateway choice is the blocking open question |
 | `audit` | Audit events (actor, action, target, timestamp, outcome, limited non-sensitive metadata) | `accounts` (actor) | P0 — shared, lands with M01 |
-| `reporting` | Role-specific dashboards and report queries (read-only aggregations over the other apps) | all read sources | **P1 candidate** (M10) — basic dashboard for MVP, advanced analytics later |
+| `reporting` | Role-specific dashboards and report queries (read-only aggregations over the other apps) | all read sources | **M10** — basic dashboard for MVP, advanced analytics later |
 
 Dependency rules:
 
@@ -233,7 +234,7 @@ Appointment and encounter are distinct records: a completed appointment does
 not mean clinical documentation is complete. Encounter corrections are
 traceable; clinical content stays out of general logs and unnecessary reports.
 
-### 6.3 WF-03 Laboratory request and result (P1 candidate, if included)
+### 6.3 WF-03 Laboratory request and result (module M6)
 
 ```text
 Doctor creates lab request from an encounter
@@ -248,7 +249,7 @@ Request, specimen, and result states are traceable; unauthorised users cannot
 alter results. Result entry and result approval are separate duties where the
 approved workflow requires it.
 
-### 6.4 WF-04 Invoice and payment (P1 candidate, if included)
+### 6.4 WF-04 Invoice and payment (modules M8 Billing + M9 Online Payments)
 
 ```text
 Billing selects approved chargeable services
@@ -320,8 +321,9 @@ Full guide: `docs/deployment-guide.md`. Shape in brief:
   acceptance, and open decisions. They must be supplied or formally deferred
   before release planning (Phase 8). This architecture plan does not invent
   their content.
-- P1 modules (prescriptions, laboratory, billing, reporting) are candidates,
-  not commitments — each needs its own approved spec before implementation
+- Modules M6 Laboratory, M7 Prescription, M8 Billing, M9 Online Payments and
+  M10 Reporting are committed scope in the module plan (owner decisions
+  2026-11-22) — each still needs its own approved spec before implementation
   (Master Plan §4.4).
 - P2/future modules (nursing observations, inpatient/beds, pharmacy/
   inventory, portal/notifications) are out of scope unless explicitly

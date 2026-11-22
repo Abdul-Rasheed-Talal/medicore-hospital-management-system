@@ -315,7 +315,7 @@ Receptionist has no encounter access in v1 (no workflow reason — least
 privilege). Billing/Lab access to encounters is granted only as their specs
 require.
 
-## 10. `/api/prescriptions/` — Prescriptions **[P1]** (M06; spec not yet written)
+## 10. `/api/prescriptions/` — Prescriptions **[M7]** (Spec 006, draft)
 
 | Method & path | Permission | Request | Response |
 |---|---|---|---|
@@ -329,7 +329,7 @@ require.
 No dosing recommendations, no automated treatment advice — the API records
 what a clinician entered, nothing more.
 
-## 11. `/api/lab-requests/` and `/api/lab-results/` — Laboratory **[P1]** (M08; spec not yet written)
+## 11. `/api/lab-requests/` and `/api/lab-results/` — Laboratory **[M6]** (Spec 007, draft)
 
 | Method & path | Permission | Request | Response |
 |---|---|---|---|
@@ -343,7 +343,7 @@ what a clinician entered, nothing more.
 | `POST /api/lab-results/{id}/finalize/` | Lab Technician (author) | — | `200` LabResult (Finalised). |
 | `POST /api/lab-results/{id}/approve/` | Lab Technician (approver — not the author, if the spec requires separation), Admin | — | `200` LabResult (Approved). Only if the lab spec adopts the approval step. |
 
-## 12. `/api/invoices/` and `/api/payments/` — Billing **[P1]** (M09; spec not yet written)
+## 12. `/api/invoices/` and `/api/payments/` — Billing **[M8]** (Spec 008, draft)
 
 | Method & path | Permission | Request | Response |
 |---|---|---|---|
@@ -357,11 +357,26 @@ what a clinician entered, nothing more.
 | `GET /api/payments/{id}/` | Billing, Admin | — | `200` Payment object. |
 | `POST /api/payments/{id}/void/` | Admin | `{ "reason": "..." }` | `200` Payment (Voided). Audited; invoice balances recompute in the same transaction. |
 
-No real payment settlement, no banking/insurance integration (Master Plan
-§4.3). `method` values: Cash / Card / Bank transfer / Other (exact list
-confirmed by the billing spec).
+Offline payment recording only. Online payment collection is §12a below
+(Spec 010, module M9). `method` values: Cash / Card / Bank transfer /
+Other (exact list confirmed by the billing spec).
 
-## 13. `/api/reports/` — Dashboards and reports **[P1]** (M10; spec not yet written)
+## 12a. `/api/online-payments/` — Online Payments **[M9]** (Spec 010, draft)
+
+| Method & path | Permission | Request | Response |
+|---|---|---|---|
+| `POST /api/online-payments/` | Billing, Admin | `{ invoice, amount }` | `201` OnlinePayment (Initiated) with gateway reference and payment link. Rejected (`400`) if the amount exceeds the outstanding balance or the invoice is Paid/Voided/Refunded. |
+| `GET /api/online-payments/` | Billing, Admin | `?invoice=&status=&page=` | Paginated online payments. |
+| `GET /api/online-payments/{id}/` | Billing, Admin | — | `200` OnlinePayment object with status history. |
+| `POST /api/online-payments/webhook/` | Gateway (signature-verified, no session auth) | Gateway callback payload | Gateway's expected acknowledgement. Unverified → `401`/`403`, nothing recorded. A verified success creates a Spec 008 Payment (method Online) and updates the invoice in one transaction; a duplicate event id is ignored. |
+| `POST /api/online-payments/{id}/refund/` | Admin | `{ "reason": "..." }` | `200` OnlinePayment (Refunded) once the gateway confirms the refund (Spec 010 OQ-010-4). Audited. |
+
+No card data ever enters MediCore; sandbox/test mode only outside
+production; gateway credentials from environment only. Gateway choice is
+Spec 010 OQ-010-1 (JazzCash, Easypaisa, Stripe, or bank transfer — owner
+picks).
+
+## 13. `/api/reports/` — Dashboards and reports **[M10]** (Spec 009, draft)
 
 Read-only. Every report respects the caller's role permissions; totals must
 reconcile with source records (Master Plan M10).
