@@ -1,6 +1,8 @@
 # MediCore — Hospital Management System
 
-**Status: DRAFT — planning baseline, pending requirements and architecture approval.**
+**Status: Spec 001 (Patient Registration) and ADR-001 (stack) approved by the
+owner 2026-11-22. No application code yet — the scaffold is the next step.**
+The Master Plan itself remains a draft planning baseline.
 MediCore is a final-year academic project: a web-based Hospital Management System (HMS)
 for a single hospital organisation, built with Spec-Driven Development (SDD).
 
@@ -49,18 +51,19 @@ No agent — human or AI — may independently change the stack, the constitutio
 the approved scope, or bypass security/testing requirements. Such changes need
 explicit project-owner approval.
 
-Current state: **no application code yet.** The first feature in progress is
-`specs/001-patient-registration/` (spec + plan, draft). Implementation starts
-only after the owner/supervisor approves that spec and the architecture plan.
+Current state: **no application code yet.** The first feature is
+`specs/001-patient-registration/` (spec + plan, **approved by the owner
+2026-11-22**). Implementation starts once the scaffold (M01
+authentication/RBAC) exists.
 
-## Proposed stack — UNCONFIRMED
+## Stack — ACCEPTED 2026-11-22
 
-> The stack below is **proposed, not confirmed**. It becomes binding only when
-> the architecture plan (`specs/001-patient-registration/plan.md` and
-> `docs/adr/001-stack.md`) is approved. See ADR-001 for the rationale and the
-> alternatives considered.
+> The stack below was **accepted by the project owner on 2026-11-22**
+> (ADR-001). See ADR-001 for the rationale and the alternatives considered.
+> Auth strategy: Django session auth (secure HttpOnly cookie, CSRF), no JWT
+> in v1.
 
-| Layer | Proposed technology |
+| Layer | Technology |
 |---|---|
 | Frontend | React + TypeScript + Vite |
 | UI styling | Tailwind CSS + shadcn/ui |

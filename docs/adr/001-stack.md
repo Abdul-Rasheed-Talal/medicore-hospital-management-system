@@ -1,16 +1,19 @@
 # ADR-001: Technology Stack
 
-**Status**: Proposed — pending owner/supervisor approval (Gate B, Master Plan §17.1).
-Nothing in this ADR is binding until it is approved. Implementation must not
-start on the basis of this draft alone.
+**Status**: ACCEPTED 2026-11-22 — approved by the project owner (Gate B,
+Master Plan §17.1). Binding for implementation. The supervisor may still
+raise objections; any change requires a new ADR with rationale.
 
-**Date**: 2026-11-22
-**Deciders**: Project owner (Abdul Rasheed Talal), academic supervisor (to confirm)
+**Date**: 2026-11-22 (accepted 2026-11-22)
+**Deciders**: Project owner (Abdul Rasheed Talal); academic supervisor review
+still outstanding — the supervisor may object, but the owner has approved
+proceeding on this stack.
 **Context**: MediCore Constitution v1.0.0 §2.2 proposes a stack but states final
 technology selections "MUST be confirmed through the approved architecture plan".
-Master Plan v1.0 §10.1 proposes the same stack, also marked "proposed".
+Master Plan v1.0 §10.1 proposes the same stack. Both are now confirmed by
+this accepted ADR.
 
-## Decision (proposed)
+## Decision (accepted)
 
 | Layer | Technology |
 |---|---|
@@ -55,20 +58,25 @@ No microservices.
 - Microservices: rejected — unjustifiable complexity for one hospital and one team.
 - SQLite as primary database: rejected — the constitution requires PostgreSQL.
 
-## Open points (must be decided at scaffold, before implementation)
+## Decided points
 
-1. **Auth/session strategy**: Django session auth (simplest for a browser app,
-   CSRF needed) vs DRF token/JWT (suits a separate frontend, revocation
-   complexity). Proposed lean: session auth for the browser app; revisit if a
-   separate mobile/portal client is ever approved.
-2. **Python / Node versions**: proposed Python 3.12, Node 20 LTS — confirm at
-   scaffold against what the lab machines actually run.
-3. **Display timezone**: proposed Asia/Karachi — confirm with the supervisor.
+1. **Auth/session strategy — DECIDED (spec D-09)**: Django session
+   authentication (secure HttpOnly cookie, CSRF protection) for the web app;
+   no JWT in v1. Rationale: the product is a browser app for staff on one
+   deployment — Django's built-in session auth is the simplest mature option,
+   with server-side revocation that JWT would have to be hand-built to match.
+   Revisit only if a separate mobile/portal client is ever approved.
+2. **Python / Node versions — DECIDED**: Python 3.12, Node 20 LTS. Verify
+   against what the lab machines actually run at scaffold; a patch-level
+   change does not need a new ADR, a major-version change does.
+3. **Display timezone — DECIDED**: Asia/Karachi (hospital is in Pakistan).
+   Timestamps stored in UTC, displayed in Asia/Karachi.
 
 ## Consequences
 
-- If approved, the scaffold PR (frontend + backend shells, CI, health check)
-  may proceed; feature implementation still needs its own approved spec.
+- The scaffold PR (frontend + backend shells, CI, health check) may proceed;
+  feature implementation still needs its own approved spec — Spec 001 was
+  approved by the owner on the same date (2026-11-22).
 - If the supervisor prefers a different stack, this ADR is amended (with
   rationale, per Constitution §4) and the plan/spec are updated before any code.
 - Changing the stack after implementation starts requires owner approval and a

@@ -1,30 +1,31 @@
 # Data Model Sketch: Patient Registration (001)
 
-**Status**: Draft — sketch only, pending approval of the spec's Open Questions
-(MRN format, required fields, duplicate rule, statuses). Do not generate
-migrations from this sketch until the plan is approved.
+**Status**: Approved by owner 2026-11-22 — decisions D-01–D-10 (spec.md)
+applied. Migrations may be generated from this sketch once the scaffold
+exists.
 
 ## Patient
 
-| Field | Type (proposed) | Notes |
+| Field | Type | Notes |
 |---|---|---|
 | id | UUID (PK) | Stable internal key; never exposed as the patient identifier |
-| mrn | String, unique, indexed | Auto-generated server-side. Proposed format `MC-YYYY-NNNNNN` — **to confirm** |
+| mrn | String, unique, indexed | Auto-generated server-side. Format `MC-YYYY-NNNNNN`, sequence resets yearly (D-01) |
 | full_name | String, required | As given; preserve original spelling |
-| date_of_birth | Date, required (proposed) | Validation: not in the future — **to confirm required vs optional** |
-| sex | Enum, required (proposed) | Values to confirm (e.g. Female / Male / Other / Prefer not to say) |
-| phone | String, optional (proposed) | Format validation rule to confirm |
-| address | Text, optional (proposed) | — |
-| emergency_contact_name | String, optional (proposed) | — |
-| emergency_contact_phone | String, optional (proposed) | — |
-| national_id | String, optional, restricted visibility | Collect only if approved (spec Open Question 7); never in logs or list views |
-| status | Enum: Active / Inactive (proposed) | Exact values to confirm; no hard delete |
+| date_of_birth | Date, required | Validation: not in the future |
+| sex | Enum, optional | Female / Male / Other / Prefer not to say |
+| phone | String, required | 9–15 digits, optional leading `+` |
+| address | Text, optional | — |
+| emergency_contact_name | String, optional | — |
+| emergency_contact_phone | String, optional | — |
+| national_id (CNIC) | String, optional, encrypted at rest | Visible in full only to Receptionist/Admin; masked (last 4 digits) for all other roles; never in logs, list views, or URLs (D-07) |
+| status | Enum: Active / Inactive / Merged / Archived | No hard delete; status transitions recorded with a reason (D-05) |
 | created_by | FK → User | Who registered the patient |
-| created_at | DateTime (UTC) | — |
-| updated_at | DateTime (UTC) | — |
+| created_at | DateTime (UTC) | Displayed in Asia/Karachi |
+| updated_at | DateTime (UTC) | Displayed in Asia/Karachi |
 
 Constraints: `mrn` unique (database); `date_of_birth <= today` (backend);
-status transitions recorded, not silent.
+`phone` matches `^\+?[0-9]{9,15}$` (backend); status transitions recorded,
+not silent.
 
 ## DuplicateCandidate
 
@@ -40,8 +41,11 @@ status transitions recorded, not silent.
 | reason | Free text, required when deciding |
 
 Rule: a candidate is created, never an automatic merge. A "different person"
-decision allows the registration to proceed; a "same person" decision blocks
-creation and links to the existing patient.
+decision (with a mandatory written reason) allows the registration to
+proceed; a "same person" decision blocks creation and links to the existing
+patient. A phone-only match creates a candidate flagged as a weak/secondary
+signal and does not block registration. Merging two records is a separate
+Admin-only action: the losing record's status becomes Merged, never deleted.
 
 ## PatientCorrection
 
@@ -80,7 +84,8 @@ Rule: no passwords, tokens, or clinical content in audit metadata.
 - Patient is distinct from User: a patient is a person receiving care; a user
   account is a staff identity that can authenticate (Master Plan §7.1).
 
-## Indexes (proposed)
+## Indexes
 
 - `mrn` (unique), `full_name` + `date_of_birth` (duplicate search),
-  `phone` (if phone search is approved), `status`, `created_at`.
+  `phone` (phone search and secondary duplicate signal), `status`, `created_at`.
+- No index on `national_id`: it is encrypted at rest and not searchable in v1.

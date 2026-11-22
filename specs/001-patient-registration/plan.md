@@ -4,7 +4,9 @@
 
 **Input**: Feature specification from `./spec.md`
 
-**Status**: Draft — pending owner/supervisor approval. No implementation before approval.
+**Status**: Approved by owner 2026-11-22. Spec 001 and ADR-001 are approved;
+the 10 open questions are decided (see spec.md "Decisions"). Implementation
+may proceed once the scaffold (M01 authentication/RBAC) exists.
 
 ## Summary
 
@@ -19,15 +21,17 @@ Technical approach: modular monolith — React + TypeScript + Vite + Tailwind +
 shadcn/ui frontend, Django + DRF + PostgreSQL backend, `patients` Django app,
 REST API under `/api/patients/`, MRN uniqueness enforced by a database
 constraint, audit events for create/correct/status/duplicate decisions.
-Stack is PROPOSED until ADR-001 is approved (see `docs/adr/001-stack.md`).
+Stack is ACCEPTED (ADR-001, owner approval 2026-11-22); session auth is the
+decided auth strategy (see spec.md D-09).
 
 ## Technical Context
 
-**Language/Version**: Python 3.12 (proposed; confirm at scaffold), TypeScript 5.x, Node 20 LTS (proposed)
+**Language/Version**: Python 3.12, TypeScript 5.x, Node 20 LTS (decided;
+verify against the lab machines at scaffold)
 
-**Primary Dependencies**: Django 5.x + Django REST Framework (proposed), React 18/19 + Vite (proposed), Tailwind CSS + shadcn/ui (proposed)
+**Primary Dependencies**: Django 5.x + Django REST Framework, React 18/19 + Vite, Tailwind CSS + shadcn/ui (all decided, ADR-001 ACCEPTED)
 
-**Storage**: PostgreSQL 16 (proposed; Constitution Principle IV requires PostgreSQL)
+**Storage**: PostgreSQL 16 (Constitution Principle IV requires PostgreSQL)
 
 **Testing**: pytest + Django test client (backend), Vitest + React Testing Library (frontend), Playwright (E2E, one journey: search → register → find)
 
@@ -47,7 +51,7 @@ Stack is PROPOSED until ADR-001 is approved (see `docs/adr/001-stack.md`).
 
 | Principle | Check for this feature |
 |---|---|
-| I. Requirements-first | Spec exists (draft); implementation blocked until spec + plan are approved. PASS (as a draft). |
+| I. Requirements-first | Spec + plan approved by owner 2026-11-22; implementation may proceed once the scaffold exists. PASS. |
 | II. Modular architecture | `patients` Django app, separate frontend pages/components, business rules in services — not duplicated in views/serializers. PASS by design. |
 | III. Security/privacy by design | Auth required; RBAC backend-enforced; least privilege (Doctor read-only); synthetic data only; no secrets in code; no patient data in logs. PASS by design. |
 | IV. Data integrity | PostgreSQL, MRN unique constraint, transactions for register + audit, migrations version-controlled, no hard delete. PASS by design. |
@@ -62,7 +66,7 @@ Stack is PROPOSED until ADR-001 is approved (see `docs/adr/001-stack.md`).
 
 ```text
 specs/001-patient-registration/
-├── spec.md              # Feature specification (draft)
+├── spec.md              # Feature specification (approved 2026-11-22)
 ├── plan.md              # This file
 ├── research.md          # Phase 0 output
 ├── data-model.md        # Phase 1 output (Patient sketch)
@@ -109,12 +113,12 @@ Key constraints: MRN unique (database), patient status as an explicit enum,
 correction history as separate rows (never overwrite), audit events without
 clinical content or secrets.
 
-## API groups (proposed — contract to be finalised at plan approval)
+## API groups (contract to be finalised at implementation; fields and rules are decided)
 
 | Group | Operations |
 |---|---|
 | `POST /api/patients/` | Register a patient (Receptionist/Admin). Returns 201 with MRN, or 409/duplicate-warning payload when a candidate match exists. |
-| `GET /api/patients/?search=&page=` | Search by MRN/name (phone if approved). Paginated, role-filtered fields. |
+| `GET /api/patients/?search=&page=` | Search by MRN, name (min 3 chars), or phone. Paginated, role-filtered fields; CNIC never searchable, never in list views. |
 | `GET /api/patients/{id}/` | Patient summary + authorised visit history (later features). |
 | `PATCH /api/patients/{id}/` | Correct demographics (Receptionist/Admin). Writes a correction-history row. |
 | `POST /api/patients/{id}/duplicate-review/` | Resolve a duplicate warning (decision + reason recorded). |
@@ -125,14 +129,18 @@ permissions table; validation errors return structured field-level errors.
 
 ## Security approach
 
-- Django authentication (session or token — to confirm in ADR-001; proposed:
-  DRF token/JWT with expiry and revocation, to be decided at scaffold).
+- Django session authentication (decided, ADR-001 / spec D-09): secure
+  HttpOnly cookie, CSRF protection, server-side session revocation. No JWT
+  in v1.
 - Permission classes per endpoint + object-level checks; deny by default.
 - MRN generation server-side only; never trust a client-supplied MRN.
-- Audit events for create / correct / status change / duplicate review.
+  Format `MC-YYYY-NNNNNN`, sequence resets yearly (spec D-01).
+- CNIC stored encrypted at rest; masked (last 4 digits) for all roles except
+  Receptionist and Admin; never in logs, list views, or URLs.
+- Audit events for create / correct / status change / duplicate review / merge.
 - No patient data in logs, URLs (beyond the MRN in a path), or error messages
   beyond what the caller's role may see.
-- Rate-limit login; throttle registration endpoints against abuse (to confirm).
+- Rate-limit login; throttle registration endpoints against abuse.
 
 ## Test strategy
 
@@ -147,9 +155,13 @@ Tests are written first (Constitution Principle V) and must fail before implemen
 
 ## Risks for this feature
 
-- **MRN format / required fields undecided** — blocks the model and the form. Mitigation: resolve Open Questions 1–3 before tasks begin.
+- **MRN format / required fields decided** (spec D-01, D-02) — the model and
+  form are unblocked.
 - **Auth/RBAC (M01) not built yet** — this feature cannot be demonstrated without it. Mitigation: build M01 first or in parallel, with this feature's tests depending on it.
-- **Duplicate rule too loose / too strict** — loose creates missed duplicates; strict blocks legitimate registrations. Mitigation: start with exact name + date of birth, log every warning, review with the owner after the first demo.
+- **Duplicate rule is exact-only** — it will miss typo'd names (documented
+  limitation, spec D-03). Mitigation: the phone-number secondary signal
+  catches many of those cases; log every warning and review with the owner
+  after the first demo before considering fuzzy matching.
 - **Scope creep into appointments** — WF-01 continues into booking; that is a separate feature. Mitigation: the spec's out-of-scope list is enforced at review.
 
 ## Complexity Tracking

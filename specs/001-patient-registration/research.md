@@ -1,6 +1,7 @@
 # Research: Patient Registration (001)
 
-**Date**: 2026-11-22 | **Status**: Draft — Phase 0 output
+**Date**: 2026-11-22 | **Status**: Approved by owner 2026-11-22 — the decisions
+below are binding (see spec.md "Decisions" D-01–D-10)
 
 ## Sources
 
@@ -9,7 +10,7 @@
 - MediCore Constitution v1.0.0 (ratified 2026-11-07), Principles I–VIII.
 - Spec Kit templates in `.specify/templates/` (spec, plan, tasks).
 
-## Decisions (proposed — to be confirmed at plan approval)
+## Decisions (approved by owner 2026-11-22)
 
 ### Stack
 
@@ -19,7 +20,7 @@
 | UI | Tailwind CSS + shadcn/ui | Consistent, accessible components; constitution proposes it; avoids a bespoke design system for an FYP | Material UI (heavier, opinionated look); Bootstrap (weaker accessibility defaults) |
 | Backend | Django + Django REST Framework | Constitution §2.2; Django's ORM, migrations, admin, and auth reduce bespoke code for a data-heavy HMS; DRF gives serializers + permission classes that map directly onto the RBAC requirement | FastAPI (less built-in auth/admin; more code for the same result); Flask (too minimal for this scope) |
 | Database | PostgreSQL | Constitution Principle IV *requires* PostgreSQL as the primary database | SQLite (dev-only; no production-grade constraints story); MySQL (no advantage, weaker constraint defaults) |
-| Auth | DRF token/JWT — TO CONFIRM | Session auth is Django's default and simplest for a browser app; token/JWT suits a separate frontend. Decision deferred to scaffold — see ADR-001 open point | Session-only (simplest, CSRF needed); JWT-only (revocation complexity) |
+| Auth | Django session auth (secure HttpOnly cookie, CSRF protection); no JWT in v1 | Decided (spec D-09, ADR-001): the product is a browser app for staff on one deployment — Django's built-in session auth is the simplest mature option, with server-side revocation that JWT would have to be hand-built to match | DRF token/JWT (revocation complexity; suits a separate frontend — revisit only if a mobile/portal client is approved) |
 | Testing | pytest + Django tests; Vitest + RTL; Playwright | Master Plan §10.1 / §16; pytest is the Django community standard; Playwright covers the one E2E journey | unittest only (weaker fixtures); Cypress (heavier than Playwright for one journey) |
 
 ### Architecture
@@ -34,36 +35,47 @@
 
 ### MRN
 
-- Proposal: `MC-YYYY-NNNNNN` (e.g. `MC-2026-000123`), sequential per year,
-  generated server-side, enforced unique by a database constraint.
-- Not decided: the owner/supervisor must confirm the format (spec Open Question 1)
-  before the model is written. Alternatives (plain sequential, hospital-code
-  prefix) are recorded in the spec.
+- Decided (spec D-01): `MC-YYYY-NNNNNN` (e.g. `MC-2026-000123`), sequential
+  per year, sequence resets to `000001` each 1 January, generated
+  server-side, enforced unique by a database constraint. Rejected
+  alternatives: plain sequential (grows unboundedly), hospital-code prefix
+  (adds nothing for a single-hospital system).
 
 ### Duplicate detection
 
-- Starting rule (proposal): exact match on full name + date of birth flags a
-  candidate. No fuzzy matching in v1 — fuzzy matching adds false positives and
-  needs tuning data the project does not have.
+- Decided rule (spec D-03): exact match on full name + date of birth blocks
+  registration pending a recorded human decision; an exact phone-number
+  match alone is a strong secondary signal (non-blocking warning). No fuzzy
+  matching in v1 — fuzzy matching adds false positives and needs tuning
+  data the project does not have (documented limitation).
 - Decision is always human-recorded; the system never merges automatically
-  (Master Plan §6 M03, FR-007).
+  (Master Plan §6 M03, FR-007). The registering Receptionist may resolve a
+  duplicate warning with a written reason; merging two records requires
+  Admin (spec D-08).
+
+### Fields and statuses
+
+- Decided (spec D-02, D-05, D-07): required — full name, date of birth,
+  phone; optional — sex/gender, address, emergency contact, CNIC. Patient
+  statuses: Active / Inactive / Merged / Archived. CNIC is optional,
+  encrypted at rest, visible in full only to Receptionist and Admin, masked
+  for all other roles; no CNIC search in v1.
+- Search fields decided (spec D-06): MRN, full name (minimum 3 characters),
+  phone number.
 
 ### Timezone
 
-- Proposed display timezone: **Asia/Karachi** (hospital location; to confirm).
+- Decided display timezone: **Asia/Karachi** (hospital is in Pakistan).
   Store timestamps in UTC; display in the hospital timezone. This matches the
   lesson from the attendance project, where UTC-based "today" stats were wrong
   by 5 hours.
 
 ## Unknowns / risks carried into the plan
 
-- Auth/session strategy (see above) — decide at scaffold, record in ADR-001.
 - Whether `accounts` (M01) lands before or with this feature — affects the demo.
-- Exact required fields and duplicate rule — owner/supervisor decisions (spec
-  Open Questions 1–9).
 - Master Plan §§19–23 are absent from the supplied document (listed in contents,
   body ends at §18.1) — deployment, risk register, governance, and acceptance
-  sections must be supplied or explicitly deferred.
+  sections are explicitly deferred until release planning (Phase 8).
 - No hospital partner or real workflow data was available for this research;
   the Master Plan's problem statement is explicitly a hypothesis "to validate"
   (§2.2). Discovery interviews remain an open item.

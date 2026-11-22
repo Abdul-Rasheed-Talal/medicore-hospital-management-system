@@ -4,7 +4,11 @@
 
 **Created**: 2026-11-22
 
-**Status**: Draft — pending owner/supervisor approval. Do not implement before approval.
+**Status**: Approved by owner 2026-11-22. The 10 open questions from the draft
+were decided by the owner (he delegated the choices to the agent; see
+"Decisions" below). Implementation may proceed once the scaffold (M01
+authentication/RBAC) exists; this spec is the binding requirement for
+patient registration.
 
 **Input**: Master Plan v1.0 (22 November 2026, draft planning baseline), §4 P0 patient
 registration, §6 M03, §7 WF-01, §8 FR-005 / FR-006 / FR-007; MediCore Constitution
@@ -71,7 +75,7 @@ and by name. No other feature needs to exist for this to be demonstrated.
    **When** they submit it,
    **Then** the record is not created and a field-level error names the missing field.
 3. **Given** a registration form with an invalid value (e.g. a date of birth in the
-   future, an implausible phone format — exact rules to be confirmed),
+   future, or a phone number that is not 9–15 digits, optional leading `+`),
    **When** they submit it,
    **Then** the record is not created and a field-level error explains the problem.
 4. **Given** two registration attempts for the same person in quick succession,
@@ -89,8 +93,9 @@ permits.
 the first step of WF-01 and the guard against FR-007 duplicates.
 
 **Independent Test**: With several synthetic patients registered, a receptionist
-can find one by MRN, by name, and by phone number (if phone search is approved),
-and a Doctor sees the same patient via a read-only search.
+can find one by MRN, by name (minimum 3 characters), and by phone number,
+and a Doctor sees the same patient via a read-only search. CNIC search does
+not exist in v1.
 
 **Acceptance Scenarios**:
 
@@ -127,13 +132,22 @@ record is created until a human decides.
    **Then** the system shows a duplicate warning listing the candidate match(es)
    and asks for a decision — it does not create the record yet.
 2. **Given** a duplicate warning, **When** the Receptionist confirms "this is a
-   different person",
-   **Then** the record is created and the decision (who, when, why) is recorded.
+   different person" and writes a reason note,
+   **Then** the record is created and the decision (who, when, reason) is recorded.
 3. **Given** a duplicate warning, **When** the Receptionist confirms "this is the
    same person",
    **Then** no new record is created and they are taken to the existing patient.
 4. **Given** a duplicate decision is recorded, **When** an Admin later reviews the
    patient, **Then** the duplicate-review history is visible.
+5. **Given** two records are found to be the same person, **When** a Receptionist
+   tries to merge them, **Then** the merge is refused — only an Admin may merge
+   records, and the merge (kept MRN, archived MRN, reason, actor) is recorded;
+   the losing record's status becomes Merged, it is never hard-deleted.
+6. **Given** a registration whose phone number matches an existing patient's phone
+   exactly, **When** the name + date of birth do not match,
+   **Then** the system shows a weaker "possible match — same phone number"
+   warning (a strong secondary signal), but registration may proceed without a
+   mandatory decision.
 
 ### User Story 4 — Correct a patient's details (Priority: P3)
 
@@ -160,23 +174,24 @@ and leaves a visible correction-history entry with author and timestamp.
 ### Edge Cases
 
 - What happens when the MRN generator collides or the database is unavailable mid-registration? Registration must fail safely with an actionable error and no partial record.
-- What happens when a patient has no phone number or no date of birth (if those fields turn out to be optional)? The form must accept the record and mark the missing data clearly.
+- What happens when a patient has no phone number? It cannot happen in v1: phone is a required field. A patient with no phone must be registered with a guardian/next-of-kin phone number, recorded as such in the emergency-contact field.
 - What happens when a search term matches many patients? Results are paginated and sorted deterministically; no unbounded list is returned.
 - What happens when a Receptionist tries to register a patient while signed in as a Doctor? The action is denied by the backend with a permission error, not just hidden in the UI.
 - What happens when the same MRN is requested twice concurrently? The database unique constraint rejects the second write.
-- What happens to a patient record that is no longer needed? Records are not hard-deleted; status change (e.g. Active → Inactive) and its reason are recorded. Exact statuses are an open decision (see below).
+- What happens to a patient record that is no longer needed? Records are not hard-deleted; status change (Active → Inactive / Archived, with a recorded reason) is used instead. Two records found to be the same person are merged only by an Admin; the losing record becomes Merged.
+- What happens when a CNIC is entered? It is optional, stored encrypted at rest, and masked (only last 4 digits visible) for every role except Receptionist and Admin.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: The system MUST allow an authorised Receptionist or Admin to register a new patient with a unique MRN (Master Plan FR-005).
-- **FR-002**: The system MUST generate the MRN automatically; staff MUST NOT type it by hand. Format is an open decision (see Open Questions).
-- **FR-003**: The system MUST validate required fields on the backend before saving; the frontend MUST show field-level errors (Master Plan FR-021).
-- **FR-004**: The system MUST allow authorised users to search patients by MRN and by name, and by phone number only if phone search is approved (Master Plan FR-006).
+- **FR-002**: The system MUST generate the MRN automatically; staff MUST NOT type it by hand. Format: `MC-YYYY-NNNNNN` — `MC` prefix, 4-digit year, 6-digit sequence that resets to `000001` each year (see Decisions, D-01).
+- **FR-003**: The system MUST validate required fields on the backend before saving; the frontend MUST show field-level errors (Master Plan FR-021). Required fields are full name, date of birth, and phone number (see Decisions, D-02).
+- **FR-004**: The system MUST allow authorised users to search patients by MRN, by full name (minimum 3 characters), and by phone number. There is no CNIC search in v1 (Master Plan FR-006).
 - **FR-005**: Search results MUST be paginated, sorted deterministically, and limited to permitted fields for the caller's role.
-- **FR-006**: The system MUST flag potential duplicate patients (same name + date of birth, at minimum — exact matching rule is an open decision) and MUST NOT create a second record or merge records without a recorded human decision (Master Plan FR-007).
-- **FR-007**: The system MUST record duplicate-review decisions (who, when, decision, reason).
+- **FR-006**: The system MUST flag potential duplicate patients: an exact match on full name + date of birth blocks registration pending a recorded human decision; an exact phone-number match alone shows a non-blocking "possible match" warning. No fuzzy matching in v1 (documented limitation). The system MUST NOT create a second record or merge records without a recorded human decision (Master Plan FR-007).
+- **FR-007**: The system MUST record duplicate-review decisions (who, when, decision, reason). The registering Receptionist may resolve a duplicate warning with a written reason; only an Admin may merge two records.
 - **FR-008**: The system MUST keep a correction history for demographic changes: old value, new value, author, timestamp. Corrections MUST NOT silently overwrite history.
 - **FR-009**: The system MUST NOT hard-delete patient records. Status changes MUST be recorded with a reason.
 - **FR-010**: The system MUST show a patient summary (demographics + status) and, once later features exist, an authorised visit history.
@@ -188,9 +203,11 @@ and leaves a visible correction-history entry with author and timestamp.
 ### Key Entities
 
 - **Patient**: A person receiving care; distinct from a staff user account. Key
-  attributes: MRN (unique), full name, date of birth (if approved as required),
-  sex/gender (if approved), phone, address (if approved), status, created-by,
-  created-at, updated-at. Full field list is an open decision.
+  attributes: MRN (unique, `MC-YYYY-NNNNNN`), full name (required), date of
+  birth (required), phone (required), sex/gender (optional), address
+  (optional), emergency contact (optional), CNIC (optional, encrypted at
+  rest, masked except for Receptionist/Admin), status (Active / Inactive /
+  Merged / Archived), created-by, created-at, updated-at. See "Data fields".
 - **DuplicateCandidate**: A flagged possible match between a new registration and
   an existing patient, with the matching fields, the reviewer's decision, and
   the decision timestamp.
@@ -217,35 +234,38 @@ and leaves a visible correction-history entry with author and timestamp.
 - **SC-006**: All P0 acceptance scenarios above pass against the implemented
   feature before it is considered complete.
 
-## Permissions (proposal — to confirm)
+## Permissions (decided — see D-04, D-05)
 
-| Role | Search patients | Register patient | Correct demographics | View correction / duplicate history | Delete patient |
-|---|---|---|---|---|---|
-| Admin | Yes | Yes | Yes | Yes | No (status change only) |
-| Receptionist / Registration | Yes | Yes | Yes | Yes (own + team) | No |
-| Doctor / Clinician | Yes (read-only) | No | No | Yes (for patients they may view) | No |
-| Nurse | To confirm | No | No | To confirm | No |
-| Lab Technician | To confirm | No | No | No | No |
-| Pharmacist | To confirm | No | No | No | No |
-| Billing | To confirm | No | No | No | No |
+| Role | Search patients | Register patient | Correct demographics | View correction / duplicate history | Merge records | Delete patient |
+|---|---|---|---|---|---|---|
+| Admin | Yes | Yes | Yes | Yes | Yes | No (status change only) |
+| Receptionist / Registration | Yes | Yes | Yes | Yes (own + team) | No | No |
+| Doctor / Clinician | Yes (read-only) | No | No | Yes (for patients they may view) | No | No |
+| Nurse | No in v1 | No | No | No | No | No |
+| Lab Technician | No in v1 | No | No | No | No | No |
+| Pharmacist | No in v1 | No | No | No | No | No |
+| Billing | No in v1 | No | No | No | No | No |
 
 Doctor read-only access here is for patient *demographics/summary*, not for
-clinical notes (which belong to the encounter feature). Nurse / Lab / Billing
-search access is deliberately left "to confirm" — the Master Plan does not
-decide it, and granting it without a workflow reason would violate least
-privilege (Constitution Principle III).
+clinical notes (which belong to the encounter feature). Nurse / Lab /
+Pharmacist / Billing have no patient-search access in v1: the Master Plan
+gives them no patient-registration workflow, and granting search without a
+workflow reason would violate least privilege (Constitution Principle III).
+Their own feature specs (encounters, lab, billing) will grant the search
+access their workflows need, when those features are specified.
 
-## Data fields (proposal — to confirm)
+## Data fields (decided — see D-02, D-05, D-07)
 
-Proposed required fields: full name, date of birth, sex/gender, phone number.
-Proposed optional fields: address, emergency contact name/phone, national ID
-number (only if a workflow justifies collecting it — see Open Questions).
-Proposed system fields: MRN (auto-generated), status (Active/Inactive — exact
-values to confirm), created-by, created-at, updated-at.
+Required fields: full name, date of birth, phone number.
+Optional fields: sex/gender (Female / Male / Other / Prefer not to say),
+address, emergency contact name/phone, CNIC.
+System fields: MRN (auto-generated, `MC-YYYY-NNNNNN`), status
+(Active / Inactive / Merged / Archived), created-by, created-at, updated-at.
 
-No field is final until the owner/supervisor confirms it. Do not collect
-fields "because they might be useful" — data minimisation is a constitution
-requirement (Principle III, §2.4).
+CNIC is optional and encrypted at rest; it is shown in full only to
+Receptionist and Admin and masked (last 4 digits only) for all other roles.
+No field is collected "because it might be useful" — data minimisation is a
+constitution requirement (Principle III, §2.4).
 
 ## Assumptions
 
@@ -254,38 +274,92 @@ requirement (Principle III, §2.4).
   patient endpoints assume a signed-in user with a role. If M01 is not yet built,
   this feature cannot be demonstrated end-to-end.
 - All demo/test data is synthetic; no real patient records are used.
-- Display timezone for dates/times is Asia/Karachi (proposed; to confirm).
-- The stack in `docs/adr/001-stack.md` is approved before implementation begins.
+- Display timezone for dates/times is Asia/Karachi (decided — the hospital is
+  in Pakistan; timestamps are stored in UTC and displayed in Asia/Karachi).
+- The stack in `docs/adr/001-stack.md` is ACCEPTED by the owner (2026-11-22);
+  implementation may proceed on that basis.
 
-## Open Questions — do not guess, decide with owner/supervisor
+## Decisions
 
-1. **MRN format**: What should the MRN look like? Proposal: `MC-YYYY-NNNNNN`
-   (e.g. `MC-2026-000123`), sequential per year. Alternatives: plain sequential
-   number, or a hospital-code prefix. The format must be agreed before the
-   database constraint and the UI are built.
-2. **Required vs optional fields**: Which demographic fields are required?
-   (Name and date of birth are proposed as required; phone, address, emergency
-   contact, national ID are undecided.)
-3. **Duplicate rule**: Exactly which fields trigger a duplicate warning?
-   (Proposal: same full name + same date of birth. Should phone number also
-   count? Should a fuzzy/typo-tolerant match be used?)
-4. **Who can register**: Is registration Receptionist-only, or also Admin?
-   (Proposal: both. Is there a separate "Registration" role, or is it part of
-   Reception?)
-5. **Patient statuses**: Which statuses exist? (Proposal: Active / Inactive.
-   Is there a "Deceased", "Merged", or "Archived" status? What may trigger
-   each, and who may set it?)
-6. **Search fields**: Is phone-number search allowed? Is search by national ID
-   allowed? What is the minimum search input (e.g. 3 characters)?
-7. **National ID / CNIC**: Should it be collected at all? If yes, how is it
-   stored and who may see it? (Privacy: collecting it without a workflow
-   reason violates data minimisation.)
-8. **Visit history on the patient summary**: Which later workflows appear there
-   (appointments, encounters)? This depends on those features' specs.
-9. **Duplicate-review authority**: Can the same Receptionist who registered the
-   patient also resolve the duplicate warning, or must a second person/Admin
-   review it?
-10. **Master Plan gaps**: The Master Plan body ends at §18.1; §§19–23 (deployment,
-    risk register, governance/decision log, acceptance, open decisions) are
-    listed in the contents but absent from the document. Those sections must be
-    supplied or explicitly deferred before release planning.
+The draft spec's 10 open questions were decided on 2026-11-22: the owner
+approved the spec and delegated the choices to the agent. Each decision below
+records the choice and its rationale. These are binding for implementation;
+changing one requires an owner decision and a spec amendment.
+
+1. **D-01 — MRN format: `MC-YYYY-NNNNNN`.** Year + 6-digit sequence, reset
+   to `000001` each 1 January (e.g. `MC-2026-000123`). Rationale: human-readable,
+   sortable by year, and the yearly reset keeps numbers short for a small
+   hospital; a plain sequential number grows unboundedly and a hospital-code
+   prefix adds nothing for a single-hospital system. Generated server-side
+   only; uniqueness enforced by a database constraint.
+2. **D-02 — Required fields: full name, date of birth, phone number.**
+   Optional: sex/gender, address, emergency contact, CNIC. Rationale: name +
+   date of birth are the minimum identity for the duplicate rule (D-03), and
+   a phone number is needed to contact the patient and as the secondary
+   duplicate signal; everything else is genuinely optional at registration
+   time and can be completed later, so requiring it would block front-desk
+   flow. Phone validation: 9–15 digits, optional leading `+`.
+3. **D-03 — Duplicate rule: exact match only.** An exact match on full name +
+   date of birth blocks registration pending a recorded human decision. An
+   exact phone-number match alone is a strong secondary signal: a
+   non-blocking "possible match — same phone number" warning. No fuzzy
+   matching in v1 — documented limitation. Rationale: fuzzy matching needs
+   tuning data the project does not have and would produce false positives
+   that block legitimate registrations; exact matching is predictable and
+   testable, and the phone signal catches the common case of a name spelled
+   differently.
+4. **D-04 — Who can register: Receptionist and Admin.** No separate
+   Registration role in v1. Rationale: registration is a front-desk job and
+   Admin already holds all Receptionist powers for cover; a separate role
+   adds RBAC complexity with no workflow behind it. If a hospital later
+   splits reception from registration duties, add the role then.
+5. **D-05 — Patient statuses: Active / Inactive / Merged / Archived.**
+   Rationale: Active is the default; Inactive covers patients no longer
+   attending (with a recorded reason); Merged is set only by an Admin merge
+   (D-08) and preserves the losing record; Archived covers records retired
+   from day-to-day use without deleting history. No Deceased status in v1 —
+   that is a clinical-record concern, not a registration one. No status is
+   ever hard-deleted.
+6. **D-06 — Search fields: MRN, full name (minimum 3 characters), phone
+   number.** No CNIC search in v1. Rationale: MRN is the exact key, name is
+   the everyday lookup, phone is the fallback when the patient has forgotten
+   their MRN; a 3-character minimum keeps name search usable while avoiding
+   one-letter queries that return the whole register. CNIC search is withheld
+   because CNIC is sensitive (D-07) and no workflow needs to look a patient
+   up by CNIC.
+7. **D-07 — CNIC: optional to collect; encrypted at rest; visible in full
+   only to Receptionist and Admin, masked (last 4 digits) for all other
+   roles; never in logs, list views, or URLs.** Rationale: CNIC is useful as
+   a strong identity anchor in Pakistan, so collecting it is justified — but
+   only optionally, since many patients will not have it to hand at
+   registration, and restricting visibility follows data minimisation and
+   least privilege (Constitution Principle III).
+8. **D-08 — Duplicate-review authority: the registering Receptionist may
+   resolve a duplicate warning with a written reason note; actually merging
+   two records requires Admin.** Rationale: making every duplicate warning
+   wait for an Admin would queue the front desk; the Receptionist is the
+   person with the patient in front of them and best placed to judge, and
+   the mandatory reason note plus audit trail makes the decision reviewable.
+   Merging is destructive to identity, so it stays Admin-only.
+9. **D-09 — Auth/session strategy: Django session authentication** (secure
+   HttpOnly cookie, CSRF protection) for the web app; no JWT in v1. Recorded
+   in ADR-001. Rationale: the product is a browser app for staff on one
+   deployment — Django's built-in session auth is the simplest mature option,
+   with server-side revocation (disable the account / end the session) that
+   JWT would have to be hand-built to match. JWT is revisited only if a
+   separate mobile/portal client is ever approved.
+10. **D-10 — Licence: MIT stays.** Rationale: the usual final-year-project
+    default; permissive and simple, and the owner raised no objection.
+
+## Deferred (not decided here)
+
+- **Visit history on the patient summary**: which later workflows appear
+  there (appointments, encounters) is decided by those features' own specs.
+- **Master Plan §§19–23 missing**: the Master Plan body ends at §18.1;
+  §§19–23 (deployment, risk register, governance/decision log, acceptance,
+  open decisions) are listed in the contents but absent from the document.
+  Explicitly deferred: they must be supplied or formally deferred before
+  release planning (Phase 8), but they do not block this feature.
+- **Auth/session strategy is decided (D-09)**; the remaining ADR-001 open
+  points (Python/Node versions, display timezone — Asia/Karachi adopted in
+  this spec) are confirmed at scaffold.
