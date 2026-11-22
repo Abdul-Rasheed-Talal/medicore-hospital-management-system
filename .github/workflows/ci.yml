@@ -1,0 +1,45 @@
+# MediCore CI — minimal, spec-stage gates.
+# Runs on push and pull requests to main. No application code exists yet, so
+# this workflow validates the documentation/spec artefacts that do exist.
+# Python/Node jobs are placeholders until the scaffold lands (see TODO below).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  docs:
+    name: Docs and spec checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Required files exist
+        run: |
+          test -f README.md
+          test -f LICENSE
+          test -f .env.example
+          test -f .specify/memory/constitution.md
+          test -f specs/001-patient-registration/spec.md
+          test -f specs/001-patient-registration/plan.md
+          test -f docs/adr/001-stack.md
+          echo "Required docs present."
+
+      - name: No secrets committed (basic scan)
+        run: |
+          if [ -f .env ]; then echo ".env must never be committed" >&2; exit 1; fi
+          if grep -rInE "(SECRET_KEY|PASSWORD|TOKEN)[[:space:]]*=[[:space:]]*['\"][^'\"]{8,}" --include="*.md" --include="*.yml" --include="*.yaml" . | grep -v ".env.example"; then echo "Possible secret committed — see matches above" >&2; exit 1; fi
+          echo "Secret scan done (placeholder values in .env.example are allowed)."
+
+      - name: Markdown files are non-empty
+        run: |
+          for f in README.md specs/001-patient-registration/spec.md specs/001-patient-registration/plan.md; do test -s "$f" || { echo "$f is empty" >&2; exit 1; }; done
+          echo "Markdown checks passed."
+
+  # TODO: add backend job (pytest) and frontend job (Vitest + build) once the
+  # scaffold PR lands. Until then these jobs do not exist — do not claim CI
+  # covers code that has not been written yet.
