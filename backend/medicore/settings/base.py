@@ -61,6 +61,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "accounts.middleware.IdleTimeoutMiddleware",
+    "accounts.middleware.ForcePasswordChangeMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -109,7 +111,10 @@ AUTH_USER_MODEL = "accounts.User"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = False  # overridden to True in prod.py
-SESSION_COOKIE_AGE = 8 * 60 * 60  # 8 hours — one staff shift
+# D-10: 12-hour session (one long shift) + 30-minute idle timeout
+# (SESSION_IDLE_TIMEOUT_SECONDS, enforced by IdleTimeoutMiddleware).
+SESSION_COOKIE_AGE = 12 * 60 * 60
+SESSION_IDLE_TIMEOUT_SECONDS = 30 * 60
 CSRF_COOKIE_HTTPONLY = False  # the JS client must read it to send X-CSRFToken
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = False  # overridden to True in prod.py
@@ -117,13 +122,21 @@ CSRF_TRUSTED_ORIGINS = _env_list(
     "CSRF_TRUSTED_ORIGINS", os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
 )
 
+# D-09: sign-in accepts a username OR an email address.
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.EmailOrUsernameBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
 # --- Password validation ----------------------------------------------------
+# D-12: Django defaults + minimum length 10; no expiry, no history in v1.
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 10},
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
