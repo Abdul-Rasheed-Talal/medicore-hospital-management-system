@@ -1,7 +1,9 @@
 # MediCore — Hospital Management System
 
 **Status: Spec 001 (Patient Registration) and ADR-001 (stack) approved by the
-owner 2026-11-22. No application code yet — the scaffold is the next step.**
+owner 2026-11-22. Application scaffold landed on `feat/medicore-scaffold`
+(backend + frontend shells, session auth, CI). No feature code yet — the
+Patient model and registration flow are the next PR.**
 The Master Plan itself remains a draft planning baseline.
 MediCore is a final-year academic project: a web-based Hospital Management System (HMS)
 for a single hospital organisation, built with Spec-Driven Development (SDD).
@@ -51,10 +53,10 @@ No agent — human or AI — may independently change the stack, the constitutio
 the approved scope, or bypass security/testing requirements. Such changes need
 explicit project-owner approval.
 
-Current state: **no application code yet.** The first feature is
-`specs/001-patient-registration/` (spec + plan, **approved by the owner
-2026-11-22**). Implementation starts once the scaffold (M01
-authentication/RBAC) exists.
+Current state: **scaffold landed (branch `feat/medicore-scaffold`).** The first
+feature is `specs/001-patient-registration/` (spec + plan, **approved by the
+owner 2026-11-22**). The Patient model and registration flow are the next PR,
+built on this scaffold.
 
 ## Stack — ACCEPTED 2026-11-22
 
@@ -85,24 +87,64 @@ specs/
     plan.md          Architecture plan (draft)
     research.md      Phase 0 research
     data-model.md    Patient data model sketch (draft)
-frontend/            React + TypeScript + Vite (to be created, after approval)
-backend/             Django + DRF (to be created, after approval)
+frontend/            React + TypeScript + Vite (scaffolded: layout, router,
+                     auth context, login shell; no feature pages yet)
+backend/             Django + DRF (scaffolded: settings split, accounts,
+                     audit, app shells; no Patient model yet)
 .github/workflows/   CI
 ```
 
-## Setup (when the scaffold lands)
+## Setup
 
-These steps are aspirational until the scaffold PR lands. They will be verified
-on a clean environment before they are presented as working.
+Prerequisites: Python 3.12, Node 20 LTS (ADR-001). The scaffold was built
+and verified on Node 24 because Node 20 was not installed on the build
+machine — a patch-level/major-version note, not a stack change; CI still
+runs Node 20 LTS.
 
 1. Clone the repository and copy the environment template:
+
    ```bash
    git clone https://github.com/abdulrasheed-tech/medicore-hospital-management-system.git
    cd medicore-hospital-management-system
    cp .env.example .env   # then fill in real values — never commit .env
    ```
-2. Start PostgreSQL and run migrations (commands to be confirmed in the scaffold).
-3. Run the backend and frontend test suites; both must pass before any demo.
+
+2. Backend (Django + DRF, from `backend/`):
+
+   ```bash
+   python -m venv .venv && source .venv/bin/activate   # or use any venv
+   pip install -r requirements.txt
+   python manage.py migrate        # SQLite by default; see step 3 for Postgres
+   python manage.py seed_roles     # create the 7 role groups (Admin … Billing)
+   python manage.py createsuperuser
+   python manage.py runserver      # http://localhost:8000
+   ```
+
+   Tests: `python -m pytest` (from `backend/`). System check:
+   `python manage.py check`.
+
+3. PostgreSQL (optional for local dev, required as the primary database):
+
+   ```bash
+   docker compose up -d db
+   # in .env: DATABASE_URL=postgres://medicore:medicore@localhost:5432/medicore
+   cd backend && python manage.py migrate
+   ```
+
+   Without `DATABASE_URL` the backend falls back to SQLite
+   (`backend/db.sqlite3`) for local development only.
+
+4. Frontend (React + TypeScript + Vite, from `frontend/`):
+
+   ```bash
+   npm install
+   npm run dev        # http://localhost:5173 — /api is proxied to Django
+   ```
+
+   Tests: `npm test` (Vitest + React Testing Library). Typecheck:
+   `npx tsc --noEmit`. Production build: `npm run build`.
+
+5. Run both test suites; both must pass before any demo.
 
 Environment variables are documented in `.env.example`. Secrets, credentials,
 and private configuration must never be committed (Constitution Principle III).

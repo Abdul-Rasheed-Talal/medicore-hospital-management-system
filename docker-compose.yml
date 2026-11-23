@@ -1,0 +1,31 @@
+# MediCore local development — PostgreSQL only.
+#
+# The backend and frontend run on the host (see README.md); this file
+# provides the PostgreSQL database the constitution requires as the
+# primary store (Principle IV). SQLite remains the no-setup fallback.
+#
+#   docker compose up -d db
+#   # then in .env: DATABASE_URL=postgres://medicore:medicore@localhost:5432/medicore
+#   cd backend && python manage.py migrate
+#
+# Stop with `docker compose down`. Data persists in the `pgdata` volume
+# until `docker compose down -v`.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: medicore
+      POSTGRES_PASSWORD: medicore
+      POSTGRES_DB: medicore
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medicore -d medicore"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
