@@ -4,11 +4,12 @@
 
 **Created**: 2026-11-22
 
-**Status**: Draft — not yet approved by the owner. Decisions in the
-"Decisions" section are taken from already-approved sources (Constitution
-v1.0.0, ADR-001, Master Plan v1.0, Spec 001) and are binding as stated
-there; everything else that needs a choice is listed under "Open Questions"
-and must be decided before implementation.
+**Status**: APPROVED by the owner 2026-11-23. Decisions D-01–D-08 are taken
+from already-approved sources (Constitution v1.0.0, ADR-001, Master Plan
+v1.0, Spec 001) and are binding as stated there; decisions D-09–D-19 below
+resolve the Open Questions — the owner approved the spec and delegated the
+choices to reasonable options (same delegation pattern as Spec 001, 2026-11-22).
+Implementation may proceed.
 
 **Input**: Master Plan v1.0 (22 November 2026, draft planning baseline), §4 P0
 authentication and role-based access, §5 actors and permissions, §6 M01,
@@ -299,22 +300,41 @@ feature spec or an Open Question.
 7. **D-07 — No email-based self-service password reset in v1.** Source: Master Plan §6 M01 ("optional password reset and account recovery workflow, subject to email configuration") — no email is configured, so the v1 reset path is Admin-initiated only. Email reset is deferred, not decided.
 8. **D-08 — Staff organisational details live in StaffProfile (Spec 003), not in the user account.** Rationale: the user account is the authentication identity; the staff profile is the work identity (department, job title, blood group). Keeping them separate follows Master Plan §7.1 and §11.
 
+Decisions D-09–D-19 below resolve the former Open Questions OQ-001–OQ-011.
+Decided by the owner 2026-11-23 (spec approved; choices delegated to
+reasonable options, same pattern as Spec 001).
+
+9. **D-09 — Sign-in identifier: username OR email** (resolves OQ-001).
+   Either works; the account keeps a unique username and a unique email.
+10. **D-10 — Session expiry: 12-hour session, 30-minute idle timeout**
+    (resolves OQ-002). Shared ward machines make an idle timeout necessary;
+    12 hours covers a full shift.
+11. **D-11 — Brute-force protection: 5 failed sign-ins, then a 15-minute
+    lockout** (resolves OQ-003). The requirement to throttle (FR-011) stands.
+12. **D-12 — Password policy: Django's default validators plus minimum
+    length 10; no expiry, no history in v1** (resolves OQ-004).
+13. **D-13 — Role-change timing: immediate** (resolves OQ-005). Permissions
+    are checked against the database on each request, so a role change
+    applies to an active session at once.
+14. **D-14 — Forced password change: yes, at first sign-in after an Admin
+    creates or resets an account** (resolves OQ-006).
+15. **D-15 — Last-Admin rule: refuse disabling or demoting the last
+    remaining Admin; first Admin recovered via a management command**
+    (resolves OQ-007). Refusing self-disable/self-demotion (FR-014) stands
+    alongside this.
+16. **D-16 — Department Manager and Auditor / Supervisor: Admin views in
+    v1, not separate login roles** (resolves OQ-008).
+17. **D-17 — Multiple roles per user: no in v1 — one role per user**
+    (resolves OQ-009).
+18. **D-18 — First Admin bootstrap: a Django management command run at
+    deploy creates the first Admin; the deployer sets its credentials,
+    and D-14 forces a change at first sign-in** (resolves OQ-010).
+19. **D-19 — Concurrent sessions: allowed in v1** (resolves OQ-011).
+
 ## Open Questions
 
-Genuinely undecided — do not guess; each needs an owner decision before
-the implementation that depends on it.
-
-- **OQ-001 — Sign-in identifier: username, email, or either?** Master Plan §11 lists "username/email" for a User without choosing. The account has a unique username; whether sign-in accepts the email address as well (or instead) is undecided.
-- **OQ-002 — Session expiry: how long does a session last, and is there an idle timeout?** Master Plan §12.1 requires the session strategy to be documented (expiry, refresh, logout, revocation) but sets no durations. Needed before sign-in behaviour can be tested.
-- **OQ-003 — Brute-force protection: after how many failed sign-ins is an account or address throttled/locked, and for how long?** Master Plan §12.1 requires throttling; the threshold and duration are undecided. The requirement to throttle (FR-011) stands regardless.
-- **OQ-004 — Password policy: what rules beyond Django's defaults?** Minimum length, complexity, password expiry, and password-history rules are undecided. Django's default validators are the baseline until the owner decides otherwise.
-- **OQ-005 — Role-change timing: does a role change take effect immediately for an active session, or only at the next sign-in?** Master Plan WF-05 step 4 says role changes take effect "according to session policy" — that policy is undecided.
-- **OQ-006 — Forced password change: must a user change their password at first sign-in after an Admin creates or resets it?** Undecided; affects the account-creation flow.
-- **OQ-007 — Last-Admin rule: what exactly prevents the hospital being left with no Admin?** Refusing self-disable/self-demotion is specified (FR-014); whether the system must also refuse disabling the last remaining Admin account, and how the first Admin is recovered if that ever happens, is undecided.
-- **OQ-008 — Department Manager and Auditor / Supervisor: separate login roles, or Admin views?** Master Plan §5 lists them as actors with department-scoped summaries and read-only audit/report access. Whether they are roles in v1 or covered by Admin access is undecided.
-- **OQ-009 — Multiple roles per user: may one user hold more than one role?** Master Plan §11 notes "a user may have one or more roles only if the approved access model permits it". Undecided for v1.
-- **OQ-010 — First Admin bootstrap: who creates the first Admin account, and how?** There is no Admin before the first one exists. The mechanism (seeded account, setup command, installer step) and its credentials handling are undecided.
-- **OQ-011 — Concurrent sessions: may one user be signed in from more than one browser/device at once?** Undecided; the spec does not forbid it by default.
+All former Open Questions OQ-001–OQ-011 are RESOLVED above as D-09–D-19
+(2026-11-23). No open questions remain for this spec.
 
 ## Deferred (not decided here)
 
