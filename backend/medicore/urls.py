@@ -9,4 +9,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", health_check, name="health-check"),
     path("api/auth/", include("accounts.urls")),
+    path("api/users/", include("accounts.user_admin_urls")),
+    path("api/audit/", include("audit.urls")),
 ]
