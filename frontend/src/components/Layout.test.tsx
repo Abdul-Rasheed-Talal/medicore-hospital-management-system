@@ -14,6 +14,7 @@ vi.mock('@/context/AuthContext', async (importOriginal) => {
       loading: false,
       login: vi.fn(),
       logout: vi.fn(),
+      changePassword: vi.fn(),
     }),
   }
 })
