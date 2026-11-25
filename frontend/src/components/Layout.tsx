@@ -29,6 +29,9 @@ export default function Layout() {
                 <span className="px-2 text-sm text-muted-foreground">
                   {user.username} · {user.role}
                 </span>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/change-password">Change password</Link>
+                </Button>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut aria-hidden />
                   Sign out

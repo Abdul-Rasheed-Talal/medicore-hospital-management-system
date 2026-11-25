@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -19,8 +19,10 @@ export default function LoginPage() {
     setError(null)
     setPending(true)
     try {
-      await login(username, password)
-      navigate('/')
+      const sessionUser = await login(identifier, password)
+      // D-14: a user forced to change their password goes straight to
+      // the change-password screen instead of the dashboard.
+      navigate(sessionUser.must_change_password ? '/change-password' : '/')
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : 'Sign-in failed. Try again.')
     } finally {
@@ -36,13 +38,13 @@ export default function LoginPage() {
       </p>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm font-medium">
-          Username
+          Username or email
           <input
             type="text"
             autoComplete="username"
             required
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
             className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </label>

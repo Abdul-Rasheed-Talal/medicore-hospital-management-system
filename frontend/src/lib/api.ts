@@ -69,9 +69,15 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   }
 
   if (!response.ok) {
+    // Django password validation returns {"new_password": [...messages]}
+    // instead of a "detail" string; surface those messages directly.
+    const fieldErrors = (payload as { new_password?: unknown } | null)
+      ?.new_password
     const detail =
       (payload as { detail?: string } | null)?.detail ??
-      `Request failed (${response.status})`
+      (Array.isArray(fieldErrors)
+        ? fieldErrors.map(String).join(' ')
+        : `Request failed (${response.status})`)
     throw new ApiError(response.status, detail)
   }
   return payload as T
