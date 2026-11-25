@@ -4,10 +4,7 @@
 
 **Created**: 2026-11-22
 
-**Status**: Draft — not yet approved by the owner. The staff blood-group
-field is already decided by owner instruction (Spec 001 D-13); everything
-else that needs a choice is listed under "Open Questions" and must be
-decided before implementation.
+**Status**: APPROVED 2026-11-25 — owner approved the spec and delegated the 8 open questions (OQ-001–OQ-008) to the proposed reasonable options, recorded as D-08–D-15 below. Implementation (M2) may proceed.
 
 **Input**: Master Plan v1.0 (22 November 2026, draft planning baseline), §4 P0
 hospital setup, §6 M02, §8 FR-004, §11 data architecture; MediCore
@@ -283,20 +280,27 @@ choices with stated rationale. Anything not listed here is an Open Question.
 5. **D-05 — Department is required for clinical roles (Doctor, Nurse, Lab Technician) and optional for other roles.** Rationale: clinical work is department-scoped (queues, schedules, reports), so a clinician without a department cannot be placed in any workflow; non-clinical staff (e.g. Billing) may not belong to a clinical department.
 6. **D-06 — Staff statuses in v1 are Active / Inactive only.** Rationale: the minimal pair the workflows need — available for new work, or not. Any richer set (on leave, terminated, suspended) is Open Question OQ-002.
 7. **D-07 — No price on services in v1.** Rationale: prices are billing data (Master Plan M09, a P1 candidate not yet specified); adding a price field now would pre-decide billing rules. Whether a price/charge field is added with this catalog or only when billing is specified is Open Question OQ-003.
+8. **D-08 — Staff identifier is auto-generated as STF-YYYY-NNNN** (year + zero-padded sequence, e.g. STF-2026-0001). Source: owner approval 2026-11-25, resolving OQ-001. Rationale: mirrors the MRN format MC-YYYY-NNNNNN from Spec 001, so staff records can be referenced reliably and consistently.
+9. **D-09 — No extra staff statuses in v1; Active / Inactive only.** Source: owner approval 2026-11-25, resolving OQ-002. Rationale: confirms D-06 — the minimal pair is enough for v1; On leave / Suspended / Terminated can be added later if a real requirement appears.
+10. **D-10 — No price field on services in v1.** Source: owner approval 2026-11-25, resolving OQ-003. Rationale: confirms D-07 — prices are billing data, added only when billing (M9) is specified.
+11. **D-11 — No seed data; the Admin enters initial departments, categories, visit types, and services through the UI.** Source: owner approval 2026-11-25, resolving OQ-004. Rationale: no starter list is assumed; the Admin knows the hospital's real structure.
+12. **D-12 — A staff profile may exist with no linked user account.** Source: owner approval 2026-11-25, resolving OQ-005. Rationale: the profile is the work identity needed for scheduling (D-04) before sign-in exists; that person simply cannot sign in until an account is linked.
+13. **D-13 — Deactivating a department that still has active staff is allowed, with a warning to the Admin; staff keep their department link.** Source: owner approval 2026-11-25, resolving OQ-006. Rationale: deactivation only hides the department from new selections; blocking it would strand staff who still need their history.
+14. **D-14 — When a user account is disabled (Spec 002), the linked staff profile is unchanged.** Source: owner approval 2026-11-25, resolving OQ-007. Rationale: the two lifecycles are separate by design (D-04); disabling sign-in must not rewrite work history.
+15. **D-15 — Department codes are short uppercase codes chosen by the Admin (e.g. OPD, LAB), unique, with no fixed list.** Source: owner approval 2026-11-25, resolving OQ-008. Rationale: uniqueness is enforced (FR-001); the Admin knows the hospital's naming, so no convention is imposed beyond that.
 
 ## Open Questions
 
-Genuinely undecided — do not guess; each needs an owner decision before
-the implementation that depends on it.
+All open questions OQ-001–OQ-008 were resolved by the owner on 2026-11-25 (recorded as D-08–D-15 above). None remain open.
 
-- **OQ-001 — Staff identifier: what format, and is it auto-generated?** Master Plan §11 says to define uniqueness for staff identifiers "where required" but gives no format (unlike the MRN, which is specified in Spec 001). Needed before staff records can be referenced reliably.
-- **OQ-002 — Staff statuses beyond Active / Inactive?** E.g. On leave, Suspended, Terminated. Undecided; affects status transitions and whether inactive staff keep appearing in history views.
-- **OQ-003 — Service price: does the service catalog carry a charge/price now, or only when billing (M09) is specified?** Undecided. Adding it now pre-decides billing rules; leaving it out means the catalog cannot yet support invoicing.
-- **OQ-004 — Seed data: what are the initial departments, service categories, visit types, and services?** Undecided. The Admin can enter them through the UI, but a sensible starter list (and whether one is seeded at all) needs an owner or supervisor decision.
-- **OQ-005 — May a staff profile exist with no linked user account?** Undecided. Scheduling needs clinicians listed, but a profile without an account can never sign in; whether that state is allowed (and for how long) is a policy choice.
-- **OQ-006 — Deactivating a department that still has active staff: allowed with a warning, or blocked?** Undecided. The spec allows deactivation (existing links are preserved) but the safer behaviour for a department with active staff is a policy choice.
-- **OQ-007 — When a user account is disabled (Spec 002), should the linked staff profile's status change too?** Undecided. The two lifecycles are separate by design (D-04); whether they are coupled on disable is a policy choice.
-- **OQ-008 — Department code format: is there a naming convention (e.g. short uppercase codes), and who chooses it?** Undecided. Codes must be unique (FR-001); any format rule beyond uniqueness is undecided.
+- **OQ-001 — Staff identifier: what format, and is it auto-generated?** RESOLVED 2026-11-25 as D-08: auto-generated STF-YYYY-NNNN.
+- **OQ-002 — Staff statuses beyond Active / Inactive?** RESOLVED 2026-11-25 as D-09: no extra statuses in v1.
+- **OQ-003 — Service price: does the service catalog carry a charge/price now, or only when billing (M09) is specified?** RESOLVED 2026-11-25 as D-10: no price in v1.
+- **OQ-004 — Seed data: what are the initial departments, service categories, visit types, and services?** RESOLVED 2026-11-25 as D-11: none seeded; Admin enters them through the UI.
+- **OQ-005 — May a staff profile exist with no linked user account?** RESOLVED 2026-11-25 as D-12: yes, allowed.
+- **OQ-006 — Deactivating a department that still has active staff: allowed with a warning, or blocked?** RESOLVED 2026-11-25 as D-13: allowed with a warning; links preserved.
+- **OQ-007 — When a user account is disabled (Spec 002), should the linked staff profile's status change too?** RESOLVED 2026-11-25 as D-14: profile unchanged.
+- **OQ-008 — Department code format: is there a naming convention (e.g. short uppercase codes), and who chooses it?** RESOLVED 2026-11-25 as D-15: short uppercase codes chosen by the Admin, unique, no fixed list.
 
 ## Deferred (not decided here)
 
