@@ -24,6 +24,11 @@ export default function Layout() {
             <Button variant="ghost" size="sm" asChild>
               <Link to="/">Dashboard</Link>
             </Button>
+            {user && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/setup/departments">Hospital setup</Link>
+              </Button>
+            )}
             {user ? (
               <>
                 <span className="px-2 text-sm text-muted-foreground">

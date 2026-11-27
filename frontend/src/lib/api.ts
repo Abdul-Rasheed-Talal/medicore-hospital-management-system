@@ -26,11 +26,19 @@ export async function ensureCsrf(): Promise<void> {
 export class ApiError extends Error {
   status: number
   detail: string
+  /** DRF field errors, when the backend returned them (e.g. duplicate
+   * code, missing required field). Keyed by field name. */
+  fieldErrors?: Record<string, string[]>
 
-  constructor(status: number, detail: string) {
+  constructor(
+    status: number,
+    detail: string,
+    fieldErrors?: Record<string, string[]>,
+  ) {
     super(detail)
     this.status = status
     this.detail = detail
+    this.fieldErrors = fieldErrors
   }
 }
 
@@ -69,16 +77,39 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   }
 
   if (!response.ok) {
-    // Django password validation returns {"new_password": [...messages]}
-    // instead of a "detail" string; surface those messages directly.
-    const fieldErrors = (payload as { new_password?: unknown } | null)
-      ?.new_password
+    // DRF validation errors arrive as {"field": ["message", ...]} (or a
+    // {"detail": "..."} string). Keep them structured so forms can show
+    // field-level errors, and join them into `detail` for plain display.
+    const payloadObj =
+      payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? (payload as Record<string, unknown>)
+        : null
+    const fieldErrors: Record<string, string[]> = {}
+    if (payloadObj) {
+      for (const [key, value] of Object.entries(payloadObj)) {
+        if (key === 'detail') continue
+        if (Array.isArray(value)) fieldErrors[key] = value.map(String)
+        else if (typeof value === 'string') fieldErrors[key] = [value]
+      }
+    }
+    const hasFieldErrors = Object.keys(fieldErrors).length > 0
     const detail =
-      (payload as { detail?: string } | null)?.detail ??
-      (Array.isArray(fieldErrors)
-        ? fieldErrors.map(String).join(' ')
+      (payloadObj?.detail as string | undefined) ??
+      // Django password validation returns {"new_password": [...]}; keep
+      // surfacing those messages directly, as before.
+      (Array.isArray(payloadObj?.new_password)
+        ? (payloadObj.new_password as unknown[]).map(String).join(' ')
+        : undefined) ??
+      (hasFieldErrors
+        ? Object.entries(fieldErrors)
+            .map(([key, messages]) => `${key}: ${messages.join(' ')}`)
+            .join(' ')
         : `Request failed (${response.status})`)
-    throw new ApiError(response.status, detail)
+    throw new ApiError(
+      response.status,
+      detail,
+      hasFieldErrors ? fieldErrors : undefined,
+    )
   }
   return payload as T
 }

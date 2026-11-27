@@ -5,6 +5,9 @@ import Layout from '@/components/Layout'
 import DashboardPage from '@/pages/DashboardPage'
 import LoginPage from '@/pages/LoginPage'
 import ChangePasswordPage from '@/pages/ChangePasswordPage'
+import DepartmentsPage from '@/pages/setup/DepartmentsPage'
+import StaffPage from '@/pages/setup/StaffPage'
+import ServicesPage from '@/pages/setup/ServicesPage'
 
 function Loading() {
   return <p className="text-sm text-muted-foreground">Loading…</p>
@@ -61,6 +64,9 @@ export default function App() {
           </Route>
           <Route element={<RequireAuth />}>
             <Route index element={<DashboardPage />} />
+            <Route path="setup/departments" element={<DepartmentsPage />} />
+            <Route path="setup/staff" element={<StaffPage />} />
+            <Route path="setup/services" element={<ServicesPage />} />
           </Route>
         </Route>
       </Routes>
