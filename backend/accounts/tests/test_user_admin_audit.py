@@ -177,12 +177,50 @@ def test_admin_reactivates_disabled_account():
     assert resp.status_code == 200
     target.refresh_from_db()
     assert target.is_active is True
+    # M1-T06 (Spec 002 US 3 scenario 3, FR-008): re-activation is audited.
+    assert AuditEvent.objects.filter(
+        action="accounts.enable", target_id=str(target.pk)
+    ).exists()
     login = Client().post(
         "/api/auth/login/",
         {"username": "to_reactivate", "password": STRONG_PASSWORD},
         content_type="application/json",
     )
     assert login.status_code == 200
+
+
+@pytest.mark.django_db
+def test_reactivating_already_active_account_records_no_enable_event():
+    client, _admin = admin_client()
+    target = make_user(username="already_active", role="nurse")
+    resp = client.patch(
+        f"/api/users/{target.pk}/",
+        {"is_active": True},
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    # No state change happened, so no re-activation event is recorded.
+    assert not AuditEvent.objects.filter(action="accounts.enable").exists()
+
+
+@pytest.mark.django_db
+def test_unauthenticated_access_to_protected_endpoints_is_denied():
+    # M1-T06 (Spec 002 SC-003): every protected endpoint denies anonymous
+    # access — audit listing, account changes, password reset, sign-out.
+    anon = Client()
+    assert anon.get("/api/audit/events/").status_code in (401, 403)
+    target = make_user(username="someone", role="nurse")
+    assert anon.patch(
+        f"/api/users/{target.pk}/",
+        {"is_active": False},
+        content_type="application/json",
+    ).status_code in (401, 403)
+    assert anon.post(
+        f"/api/users/{target.pk}/reset-password/",
+        {"password": STRONG_PASSWORD},
+        content_type="application/json",
+    ).status_code in (401, 403)
+    assert anon.post("/api/auth/logout/").status_code in (401, 403)
 
 
 @pytest.mark.django_db

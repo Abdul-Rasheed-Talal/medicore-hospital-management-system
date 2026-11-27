@@ -33,9 +33,9 @@ starts, finishes, or a decision changes it.
 
 | Module | Name | Spec | Status | Version (when tagged) |
 |---|---|---|---|---|
-| M0 | Foundation & Documentation | 001–009 + docs/ | In progress — specs + docs written, scaffold parked | — |
-| M1 | Auth & RBAC | 002 | Spec draft, awaiting approval | — |
-| M2 | Hospital Setup | 003 | Spec draft, awaiting approval | — |
+| M0 | Foundation & Documentation | 001–009 + docs/ | Done — specs + docs written; scaffold unparked and merged 2026-11-23 (upstream PR #5) | — |
+| M1 | Auth & RBAC | 002 | **Complete pending tag** — Spec 002 approved 2026-11-23 (D-09–D-19); T01–T06 done 2026-11-27; tag M1-v1.0.0 next | — |
+| M2 | Hospital Setup | 003 | Spec 003 **Approved** 2026-11-25 (D-08–D-15); T03 backend merged 2026-11-26 (upstream PR #11); T04 frontend next | — |
 | M3 | Patient Registration | 001 | **Approved** 2026-11-22 (D-01–D-13) | — |
 | M4 | Appointments | 004 | Spec draft, awaiting approval | — |
 | M5 | Encounters | 005 | Spec draft, awaiting approval | — |
@@ -65,10 +65,16 @@ model + MRN; `M3-T03-B`: registration API + duplicate review).
 - **M0-T01** — Specs 001–009 written. **Done** (Spec 001 approved; 002–009 draft).
 - **M0-T02** — Complete documentation (architecture, data model, API contract,
   UX flows, test strategy, deployment guide). **Done**, this document included.
-- **M0-T03** — Application scaffold (Django + React shells). **Parked** — code
-  exists locally on branch `feat/medicore-scaffold`, unpushed; resumes only
-  after specs 002–009 are approved.
-- **M1-T01 / M2-T01 / M4-T01 / M5-T01 / M6-T01 / M7-T01 / M8-T01 / M9-T01 /
+- **M0-T03** — Application scaffold (Django + React shells). **Done** — unparked and merged 2026-11-23 (upstream PR #5, main `4fcd5f8`).
+- **M1-T01 / M1-T02** — Spec 002 written and **approved 2026-11-23** (D-09–D-19).
+- **M1-T03** — Auth backend. **Done**, merged 2026-11-23 (upstream PR #6, main `91ff686`).
+- **M1-T04** — User-admin API + auth audit events. **Done**, merged 2026-11-24 (upstream PR #7, main `68d3308`).
+- **M1-T05** — Frontend auth. **Done**, merged 2026-11-25 (upstream PR #9, main `e606570`).
+- **M1-T06** — Review + converge. **Done 2026-11-27** — verified Spec 002 D-01–D-19 against code; one gap fixed (`accounts.enable` audit event on reactivation); module complete pending tag.
+- **M2-T01 / M2-T02** — Spec 003 written and **approved 2026-11-25** (D-08–D-15).
+- **M2-T03** — Organisation backend. **Done**, merged 2026-11-26 (upstream PR #11, main `3d715a7`).
+- **M2-T04** — Frontend: departments/staff/services screens. **Next.**
+- **M4-T01 / M5-T01 / M6-T01 / M7-T01 / M8-T01 / M9-T01 /
   M10-T01** — specs written, drafts awaiting owner/supervisor approval.
 - **M3-T01 / M3-T02** — **Done and approved.**
 
@@ -79,10 +85,10 @@ check-in reports the task worked on, what was finished, and the next task.
 
 | Week | Focus | Exit |
 |---|---|---|
-| 23–29 Nov 2026 | Review + approve specs 002–010; close blocking open questions (gateway choice for M9 decided 2026-11-22: Easypaisa, JazzCash, bank transfer primary; Stripe for cards) | Specs approved |
-| 30 Nov–6 Dec | M0-T03 scaffold (unpark) + M1-T03/T04 auth backend + frontend | Runnable skeleton, login works |
-| 7–13 Dec | M1-T05/T06 (auth tests + converge) → **tag M1-v1.0.0**; M2 hospital setup | M1 tagged, M2 underway |
-| 14–20 Dec | M2 complete → **tag M2-v1.0.0**; M3 patient registration | M2 tagged, M3 underway |
+| 23–29 Nov 2026 | Specs 002 + 003 approved; M0-T03 scaffold unparked (23 Nov); M1-T03/T04/T05 merged (23–25 Nov); M2-T03 merged (26 Nov); M1-T06 review done (27 Nov) | M1 complete pending tag; M2 underway |
+| 30 Nov–6 Dec | M2-T04 frontend + M2-T05 tests + M2-T06 review → **tag M2-v1.0.0**; M3 patient registration begins | M2 tagged, M3 underway |
+| 7–13 Dec | M3 patient registration (T03 backend, T04 frontend) | M3 underway |
+| 14–20 Dec | M3 complete → **tag M3-v1.0.0**; M4 appointments | M3 tagged, M4 underway |
 | 21 Dec–3 Jan | M3 complete → **tag M3-v1.0.0**; M4 appointments | M3 tagged, M4 underway |
 | Jan 2027 | M4 → **tag M4-v1.0.0**; M5 encounters → **tag M5-v1.0.0** | Outpatient flow complete |
 | Feb 2027 | M6 Laboratory → **tag M6-v1.0.0**; M7 Prescription → **tag M7-v1.0.0** | Lab + prescription complete |

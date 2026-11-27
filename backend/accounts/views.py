@@ -229,8 +229,16 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 )
             if "is_active" in request.data:
                 if request.data["is_active"]:
-                    target.is_active = True
-                    target.save(update_fields=["is_active"])
+                    # M1-T06 (Spec 002 US 3 scenario 3, FR-008): a real
+                    # re-activation is audited, like a disable is. Setting
+                    # is_active on an already-active account changes
+                    # nothing, so it records no event.
+                    if not target.is_active:
+                        target.is_active = True
+                        target.save(update_fields=["is_active"])
+                        record_event(
+                            actor=request.user, action="accounts.enable", target=target
+                        )
                 else:
                     disable_user(actor=request.user, target=target)
                     record_event(
