@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import ServicesPage from '@/pages/setup/ServicesPage'
@@ -223,5 +223,98 @@ describe('ServicesPage', () => {
         screen.getByText('A service with this code already exists.'),
       ).toBeInTheDocument(),
     )
+  })
+
+  it('hides a deactivated category from the new-service form (FR-005)', async () => {
+    const user = userEvent.setup()
+    vi.mocked(listServiceCategories).mockResolvedValue({
+      count: 2,
+      next: null,
+      previous: null,
+      results: [
+        {
+          id: 1,
+          name: 'Consultation',
+          is_active: true,
+          created_by: 'admin',
+          created_at: '2026-11-26T00:00:00Z',
+          updated_at: '2026-11-26T00:00:00Z',
+        },
+        {
+          id: 2,
+          name: 'Imaging',
+          is_active: false,
+          created_by: 'admin',
+          created_at: '2026-11-26T00:00:00Z',
+          updated_at: '2026-11-26T00:00:00Z',
+        },
+      ],
+    })
+    renderPage()
+    await user.click(await screen.findByText('New service'))
+    const categorySelect = screen.getByLabelText('Category')
+    expect(
+      within(categorySelect).getByRole('option', { name: 'Consultation' }),
+    ).toBeInTheDocument()
+    expect(
+      within(categorySelect).queryByRole('option', { name: 'Imaging' }),
+    ).not.toBeInTheDocument()
+    // The deactivated category is still managed on the Categories tab.
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    await user.click(screen.getByRole('button', { name: 'Categories' }))
+    expect(await screen.findByText('Imaging')).toBeInTheDocument()
+  })
+
+  it('keeps a deactivated category when editing the service that uses it', async () => {
+    const user = userEvent.setup()
+    vi.mocked(listServiceCategories).mockResolvedValue({
+      count: 2,
+      next: null,
+      previous: null,
+      results: [
+        {
+          id: 1,
+          name: 'Consultation',
+          is_active: true,
+          created_by: 'admin',
+          created_at: '2026-11-26T00:00:00Z',
+          updated_at: '2026-11-26T00:00:00Z',
+        },
+        {
+          id: 2,
+          name: 'Imaging',
+          is_active: false,
+          created_by: 'admin',
+          created_at: '2026-11-26T00:00:00Z',
+          updated_at: '2026-11-26T00:00:00Z',
+        },
+      ],
+    })
+    vi.mocked(listServices).mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [
+        {
+          id: 1,
+          name: 'X-ray',
+          code: 'XRAY',
+          category: 2,
+          department: 1,
+          is_active: true,
+          created_by: 'admin',
+          created_at: '2026-11-26T00:00:00Z',
+          updated_at: '2026-11-26T00:00:00Z',
+        },
+      ],
+    })
+    renderPage()
+    expect(await screen.findByText('X-ray')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    const categorySelect = screen.getByLabelText('Category')
+    expect(
+      within(categorySelect).getByRole('option', { name: 'Imaging' }),
+    ).toBeInTheDocument()
+    expect(categorySelect).toHaveValue('2')
   })
 })
