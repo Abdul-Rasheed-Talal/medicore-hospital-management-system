@@ -17,6 +17,7 @@ from django.db.models import ProtectedError
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError as DRFValidationError
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
 from audit.models import AuditEvent
@@ -46,6 +47,12 @@ class _OrganizationViewSet(viewsets.ModelViewSet):
 
     permission_classes = [IsAdminOrReadOnly]
     audit_prefix = "organization.reference"  # overridden per viewset
+    # FR-010: list views paginate (global PageNumberPagination, page 20),
+    # filter (?is_active / ?status / ?available, see get_queryset below),
+    # and sort/search (?ordering=, ?search=).
+    filter_backends = [OrderingFilter, SearchFilter]
+    ordering_fields = ["name", "created_at"]
+    search_fields = ["name"]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -117,6 +124,8 @@ class DepartmentViewSet(_OrganizationViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     audit_prefix = "organization.department"
+    ordering_fields = ["name", "code", "created_at"]
+    search_fields = ["name", "code"]
 
     def referenced_by(self, obj):
         staff_count = StaffProfile.objects.filter(department=obj).count()
@@ -186,6 +195,8 @@ class ServiceViewSet(_OrganizationViewSet):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
     audit_prefix = "organization.service"
+    ordering_fields = ["name", "code", "created_at"]
+    search_fields = ["name", "code"]
 
 
 class StaffViewSet(_OrganizationViewSet):
@@ -194,6 +205,8 @@ class StaffViewSet(_OrganizationViewSet):
     queryset = StaffProfile.objects.select_related("department", "user").all()
     serializer_class = StaffProfileSerializer
     audit_prefix = "organization.staff"
+    ordering_fields = ["full_name", "staff_id", "created_at"]
+    search_fields = ["full_name", "staff_id", "job_title"]
 
     def get_queryset(self):
         qs = super().get_queryset()
