@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { ApiError } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -268,6 +268,7 @@ export default function ServicesPage() {
   const [visitTypes, setVisitTypes] = useState<VisitType[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
+  const hasLoadedRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -283,7 +284,12 @@ export default function ServicesPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
 
   const loadAll = useCallback(async () => {
-    setLoading(true)
+    // Only show the full-page loading state on the first load. Reloads
+    // after a create/edit/delete must not unmount the tab content — the
+    // reference managers keep their success notice in local state, and
+    // unmounting wipes it (M2-T05 E2E caught "Category created." never
+    // appearing).
+    if (!hasLoadedRef.current) setLoading(true)
     setError(null)
     try {
       const [servicesPage, categoriesPage, visitTypesPage, departmentsPage] =
@@ -301,6 +307,7 @@ export default function ServicesPage() {
       setError(err instanceof ApiError ? err.detail : 'Could not load services.')
     } finally {
       setLoading(false)
+      hasLoadedRef.current = true
     }
   }, [])
 
