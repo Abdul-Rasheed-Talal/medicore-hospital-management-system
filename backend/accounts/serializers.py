@@ -15,7 +15,15 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Read (and limited update) representation of a staff user."""
+    """Read (and limited update) representation of a staff user.
+
+    ``staff_profile`` is the reverse of the staff↔account link (Spec 003
+    US2 scenario 4, D-04): the link is visible on both records — the
+    staff profile carries the account id, and the account carries the
+    profile. Read-only; linking is done from the staff side.
+    """
+
+    staff_profile = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -28,8 +36,22 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
             "is_active",
             "must_change_password",
+            "staff_profile",
         )
-        read_only_fields = ("id", "must_change_password")
+        read_only_fields = ("id", "must_change_password", "staff_profile")
+
+    def get_staff_profile(self, obj):
+        # Reverse OneToOne accessor; raises RelatedObjectDoesNotExist
+        # (an AttributeError subclass) when no profile is linked, so
+        # getattr's default applies.
+        profile = getattr(obj, "staff_profile", None)
+        if profile is None:
+            return None
+        return {
+            "id": profile.id,
+            "staff_id": profile.staff_id,
+            "full_name": profile.full_name,
+        }
 
 
 class UserCreateSerializer(serializers.ModelSerializer):

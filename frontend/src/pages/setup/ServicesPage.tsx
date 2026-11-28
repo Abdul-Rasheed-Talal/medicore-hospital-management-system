@@ -320,6 +320,13 @@ export default function ServicesPage() {
   const departmentName = (id: number | null) =>
     departments.find((d) => d.id === id)?.name ?? '—'
 
+  /** FR-005: a deactivated category must not appear in the selection
+   * list for a new service. When editing a service, its own category
+   * stays offered even if deactivated, so the existing link is kept. */
+  const categoryOptions = categories.filter(
+    (c) => c.is_active || (editing !== null && c.id === editing.category),
+  )
+
   function openCreate() {
     setEditing(null)
     setName('')
@@ -527,7 +534,7 @@ export default function ServicesPage() {
                   className={inputClassName}
                 >
                   <option value="">Select a category</option>
-                  {categories.map((c) => (
+                  {categoryOptions.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                     </option>

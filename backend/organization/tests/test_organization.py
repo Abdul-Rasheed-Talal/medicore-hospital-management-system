@@ -337,7 +337,7 @@ def test_admin_creates_staff_profile_with_auto_staff_id_and_audit():
     client = admin_client()
     dept = make_department(client, code="OPD")
     staff = make_staff(client, dept["id"], blood_group="O+")
-    assert re.fullmatch(r"STF-2026-\d{4}", staff["staff_id"])
+    assert re.fullmatch(r"STF-\d{4}-\d{4}", staff["staff_id"])
     assert staff["status"] == "active"
     assert staff["blood_group"] == "O+"
     assert AuditEvent.objects.filter(

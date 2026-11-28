@@ -35,7 +35,7 @@ starts, finishes, or a decision changes it.
 |---|---|---|---|---|
 | M0 | Foundation & Documentation | 001–009 + docs/ | Done — specs + docs written; scaffold unparked and merged 2026-11-23 (upstream PR #5) | — |
 | M1 | Auth & RBAC | 002 | **Complete — tagged M1-v1.0.0** 2026-11-27 on `cbfc7f0` (PR #12 merge) | M1-v1.0.0 |
-| M2 | Hospital Setup | 003 | Spec 003 **Approved** 2026-11-25 (D-08–D-15); T03 backend merged 2026-11-26 (upstream PR #11); T04 frontend merged 2026-11-27 (upstream PR #13, main `307375f`); T05 tests underway | — |
+| M2 | Hospital Setup | 003 | Spec 003 **Approved** 2026-11-25 (D-08–D-15); T03 backend merged 2026-11-26 (upstream PR #11); T04 frontend merged 2026-11-27 (upstream PR #13, main `307375f`); T05 tests merged 2026-11-28 (upstream PR #14, main `b249347`); T06 review in progress | — |
 | M3 | Patient Registration | 001 | **Approved** 2026-11-22 (D-01–D-13) | — |
 | M4 | Appointments | 004 | Spec draft, awaiting approval | — |
 | M5 | Encounters | 005 | Spec draft, awaiting approval | — |
@@ -74,7 +74,8 @@ model + MRN; `M3-T03-B`: registration API + duplicate review).
 - **M2-T01 / M2-T02** — Spec 003 written and **approved 2026-11-25** (D-08–D-15).
 - **M2-T03** — Organisation backend. **Done**, merged 2026-11-26 (upstream PR #11, main `3d715a7`).
 - **M2-T04** — Frontend: departments/staff/services screens. **Done**, merged 2026-11-27 (upstream PR #13, main `307375f`).
-- **M2-T05** — Tests: deny beyond create, deactivate/reactivate audit, FR-010 sort/search/pagination, unauthenticated coverage, plus first Playwright E2E journey. **In progress.**
+- **M2-T05** — Tests: deny beyond create, deactivate/reactivate audit, FR-010 sort/search/pagination, unauthenticated coverage, plus first Playwright E2E journey. **Done**, merged 2026-11-28 (upstream PR #14, main `b249347`; all 4 CI checks green incl. E2E).
+- **M2-T06** — Review + converge. **In progress 2026-11-28** — verifying Spec 003 acceptance scenarios against code; two gaps fixed so far (staff↔account link now visible on the user record; deactivated categories no longer offered for new services).
 - **M4-T01 / M5-T01 / M6-T01 / M7-T01 / M8-T01 / M9-T01 /
   M10-T01** — specs written, drafts awaiting owner/supervisor approval.
 - **M3-T01 / M3-T02** — **Done and approved.**
@@ -86,8 +87,8 @@ check-in reports the task worked on, what was finished, and the next task.
 
 | Week | Focus | Exit |
 |---|---|---|
-| 23–29 Nov 2026 | Specs 002 + 003 approved; M0-T03 scaffold unparked (23 Nov); M1-T03/T04/T05 merged (23–25 Nov); M2-T03 merged (26 Nov); M1-T06 review done + M1 tagged (27 Nov); M2-T04 merged (27 Nov) | M1 tagged M1-v1.0.0; M2 underway |
-| 30 Nov–6 Dec | M2-T04 frontend + M2-T05 tests + M2-T06 review → **tag M2-v1.0.0**; M3 patient registration begins | M2 tagged, M3 underway |
+| 23–29 Nov 2026 | Specs 002 + 003 approved; M0-T03 scaffold unparked (23 Nov); M1-T03/T04/T05 merged (23–25 Nov); M2-T03 merged (26 Nov); M1-T06 review done + M1 tagged (27 Nov); M2-T04 merged (27 Nov); M2-T05 merged (28 Nov); M2-T06 review underway (28 Nov) | M1 tagged M1-v1.0.0; M2 finishing, a day early |
+| 30 Nov–6 Dec | **M2 tagged M2-v1.0.0** (review finishing 28 Nov, ahead of plan); M3 patient registration begins | M2 tagged, M3 underway |
 | 7–13 Dec | M3 patient registration (T03 backend, T04 frontend) | M3 underway |
 | 14–20 Dec | M3 complete → **tag M3-v1.0.0**; M4 appointments | M3 tagged, M4 underway |
 | 21 Dec–3 Jan | M3 complete → **tag M3-v1.0.0**; M4 appointments | M3 tagged, M4 underway |
